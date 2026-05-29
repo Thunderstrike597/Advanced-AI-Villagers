@@ -1,11 +1,11 @@
 package net.kenji.advanced_ai_villagers.events;
 
 import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
-import net.kenji.advanced_ai_villagers.model.VillagerAiModel;
+import net.kenji.advanced_ai_villagers.api.context.ContextManager;
+import net.kenji.advanced_ai_villagers.api.model.VillagerAiModel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.npc.Villager;
-import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -20,21 +20,33 @@ public class PlayerChatEvents {
     public static void onPlayerChat(ServerChatEvent event) {
         String message = event.getMessage().getString();
 
-
         ServerPlayer player =  event.getPlayer();
         Villager nearest = findNearestVillager(player, 10); // within 10 blocks
-        
+
+
+
+
         if (nearest == null) return; // no villager nearby, ignore
-        
-        String situation = "Player says to villager: " + message;
-        Log.info("AI Situation: " + situation);
-        
+
+        final String[] situation = {"Player says to villager: " + message};
+
+
         Thread aiThread = new Thread(() -> {
-            String response = VillagerAiModel.generate(situation, VillagerAiModel.TEMPERATURE_CHAT, 20);
+            String context = ContextManager.getVillagerContext(nearest);
+            // context already returns "Loc=Village, Time=Day, Shelter=Outside" etc
+            // strip the "Context: " prefix since the prompt template handles that
+            context = context.replace("Context: ", "");
+
+            String response = VillagerAiModel.generate(message, context, VillagerAiModel.TEMPERATURE_CHAT, 25);
+            Log.info("Response: " + response);
+            // Replace name placeholder
+            response = response.replace("VILLAGER_NAME", nearest.getName().getString());
+
             if (!response.isEmpty()) {
+                String finalResponse = response;
                 nearest.getServer().execute(() -> {
                     player.sendSystemMessage(
-                        Component.literal("[" + nearest.getName().getString() + "]: " + response)
+                            Component.literal("[" + nearest.getName().getString() + "]: " + finalResponse)
                     );
                 });
             }

@@ -1,9 +1,10 @@
-package net.kenji.advanced_ai_villagers.model;
+package net.kenji.advanced_ai_villagers.api.model;
 
 import ai.onnxruntime.*;
 import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jline.utils.Log;
 
 import java.io.InputStream;
 import java.nio.file.*;
@@ -18,7 +19,7 @@ public class VillagerAiModel {
     private static VillagerTokenizer tokenizer = new VillagerTokenizer();
 
     public static final float TEMPERATURE_PRESET = 0.42F;
-    public static final float TEMPERATURE_CHAT = 0.85F;
+    public static final float TEMPERATURE_CHAT = 0.64F;
     public static final float REPETITION_PENALTY = 1.8F;
     public static final int PHRASE_REPEAT_LIMIT = 3;
 
@@ -73,19 +74,17 @@ public class VillagerAiModel {
         }
     }
 
-    public static String generate(String situation, float temperature, int maxTokens) {
+    public static String generate(String playerMessage, String context, float temperature, int maxTokens) {
         if (!loaded) return "";
 
         try {
-            String prompt = "### Situation: " + situation + "\n### Villager:";
-
-            // Tokenize the prompt manually using GPT-2's encoding
-            // GPT-2 uses a simple space-based tokenization we can approximate
+            // Match the training format exactly
+            String prompt = "<|context|> " + context + " <|player|> " + playerMessage + " <|villager|>";
+            Log.info("FULL Ai Message and Prompt: " + prompt);
             long[] tokenIds = tokenizer.encode(prompt);
             int promptLength = tokenIds.length;
-            // Run up to 30 generation steps (one token at a time)
+
             for (int i = 0; i < maxTokens; i++) {
-                // Create input tensor
                 long[][] inputArray = new long[1][tokenIds.length];
                 inputArray[0] = tokenIds;
 
@@ -93,50 +92,60 @@ public class VillagerAiModel {
                 Map<String, OnnxTensor> inputs = new HashMap<>();
                 inputs.put("input_ids", inputTensor);
 
-                // Run inference
                 OrtSession.Result result = session.run(inputs);
                 float[][][] logits = (float[][][]) result.get(0).getValue();
 
-                // Get the last token's logits and pick the highest scoring token
                 float[] lastLogits = logits[0][tokenIds.length - 1];
                 applyNoRepeatNgram(lastLogits, tokenIds, PHRASE_REPEAT_LIMIT);
 
                 int nextToken = sampleWithTemperature(lastLogits, temperature, REPETITION_PENALTY, tokenIds);
 
-                // Stop if we hit end of sequence token (50256 for GPT-2)
+                // Stop at EOS or endoftext token
                 if (nextToken == 50256) break;
-
-                // Stop if we hit a newline token
                 if (nextToken == 198) break;
 
-                // Append new token
                 tokenIds = appendToken(tokenIds, nextToken);
-
                 inputTensor.close();
                 result.close();
             }
 
-            // Decode just the generated part (after the prompt)
             String response = tokenizer.decode(Arrays.copyOfRange(tokenIds, promptLength, tokenIds.length)).trim();
 
-            // Strip anything from ### onwards (model trying to start next prompt)
-            if (response.contains("###")) {
-                response = response.substring(0, response.indexOf("###")).trim();
+            // Strip the endoftext token if present
+            response = response.replace("<|endoftext|>", "").trim();
+
+            // Strip anything from special tokens onwards
+            if (response.contains("<|")) {
+                response = response.substring(0, response.indexOf("<|")).trim();
             }
 
-            // Strip stage directions and anything after quotes/brackets
-            response = response.replaceAll("\\(.*?\\)", "").trim();  // remove (anything in brackets)
-            response = response.split("\"")[0].trim();               // cut at first quote
-            response = response.split("\\*")[0].trim();              // cut at first asterisk
-
-            // Clean up trailing punctuation oddities
+            // Strip stage directions
+            response = response.replaceAll("\\(.*?\\)", "").trim();
+            response = response.split("\"")[0].trim();
+            response = response.split("\\*")[0].trim();
             response = response.replaceAll("[\\s]+$", "").trim();
 
+            if (!response.isEmpty() && !endsWithSentencePunctuation(response)) {
+                int lastPunctuation = Math.max(
+                        Math.max(response.lastIndexOf('.'), response.lastIndexOf('!')),
+                        response.lastIndexOf('?')
+                );
+                if (lastPunctuation > response.length() / 2) {
+                    response = response.substring(0, lastPunctuation + 1).trim();
+                }
+            }
+
             return response;
+
         } catch (Exception e) {
             LOGGER.error("Generation failed: " + e.getMessage());
             return "";
         }
+    }
+    private static boolean endsWithSentencePunctuation(String text) {
+        if (text.isEmpty()) return false;
+        char last = text.charAt(text.length() - 1);
+        return last == '.' || last == '!' || last == '?' || last == '~' || last == '-';
     }
     private static void applyNoRepeatNgram(float[] logits, long[] tokenIds, int ngramSize) {
         if (tokenIds.length < ngramSize) return;

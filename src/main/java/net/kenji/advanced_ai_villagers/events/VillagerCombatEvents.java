@@ -1,7 +1,8 @@
 package net.kenji.advanced_ai_villagers.events;
 
 import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
-import net.kenji.advanced_ai_villagers.model.VillagerAiModel;
+import net.kenji.advanced_ai_villagers.api.context.ContextManager;
+import net.kenji.advanced_ai_villagers.api.model.VillagerAiModel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.npc.Villager;
@@ -39,12 +40,12 @@ public class VillagerCombatEvents {
         lastSpokenTime.put(villagerID, now);
 
         // Build the situation string — this is what gets passed to the model
-        String situation = buildSituation(villager);
 
         // Run inference off the main thread so it doesn't freeze the game
         Thread aiThread = new Thread(() -> {
             Log.info("Model loaded state: " + VillagerAiModel.isLoaded());
-            String response = VillagerAiModel.generate(situation, VillagerAiModel.TEMPERATURE_PRESET, 14);
+            String context = ContextManager.getVillagerContext(villager).replace("Context: ", "");
+            String response = VillagerAiModel.generate(buildSituation(villager), context, VillagerAiModel.TEMPERATURE_PRESET, 15);
             Log.info("Logging Villager Hurt Response: " + response);
 
             if (!response.isEmpty()) {

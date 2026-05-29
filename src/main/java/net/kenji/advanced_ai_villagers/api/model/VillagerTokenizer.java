@@ -1,4 +1,4 @@
-package net.kenji.advanced_ai_villagers.model;
+package net.kenji.advanced_ai_villagers.api.model;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
