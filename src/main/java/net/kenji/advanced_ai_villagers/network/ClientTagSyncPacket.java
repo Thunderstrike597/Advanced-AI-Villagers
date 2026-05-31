@@ -1,10 +1,10 @@
 package net.kenji.advanced_ai_villagers.network;
 
+import net.kenji.advanced_ai_villagers.api.SpeechManager;
 import net.kenji.advanced_ai_villagers.client.render.TextBubbleRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -52,6 +52,6 @@ public class ClientTagSyncPacket {
         Entity entity = player.level().getEntity(packet.entityId);
         if (entity == null) return;
 
-        entity.getPersistentData().putString(TextBubbleRenderer.SPEECH_BUBBLE_RENDER_TAG, packet.tagText);
+        entity.getPersistentData().putString(SpeechManager.SPEECH_BUBBLE_TAG, packet.tagText);
     }
 }

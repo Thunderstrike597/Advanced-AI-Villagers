@@ -1,6 +1,7 @@
 package net.kenji.advanced_ai_villagers.events;
 
 import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
+import net.kenji.advanced_ai_villagers.api.SpeechManager;
 import net.kenji.advanced_ai_villagers.api.context.ContextManager;
 import net.kenji.advanced_ai_villagers.api.model.VillagerAiModel;
 import net.kenji.advanced_ai_villagers.client.render.TextBubbleRenderer;
@@ -48,8 +49,7 @@ public class PlayerChatEvents {
             if (!response.isEmpty()) {
                 String finalResponse = response;
                 nearest.getServer().execute(() -> {
-                    ModPacketHandler.sendToPlayer(new ClientTagSyncPacket(nearest.getId(), finalResponse), player);
-                    nearest.getPersistentData().putString(TextBubbleRenderer.SPEECH_BUBBLE_RENDER_TAG, finalResponse);
+                    SpeechManager.addVillagerSpeech(nearest, player, finalResponse);
                 });
             }
         });

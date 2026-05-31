@@ -3,6 +3,7 @@ package net.kenji.advanced_ai_villagers.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
+import net.kenji.advanced_ai_villagers.api.SpeechManager;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -22,7 +23,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.jline.utils.Log;
 import org.joml.Matrix4f;
 
 import java.util.List;
@@ -31,8 +31,8 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = AdvancedAiVillagers.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class TextBubbleRenderer {
 
+
     private static final double BUBBLE_RENDER_RANGE = 40;
-    public static final String SPEECH_BUBBLE_RENDER_TAG = "villager_render_bubble";
     private static final ResourceLocation SPEECH_BUBBLE_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(AdvancedAiVillagers.MODID, "textures/gui/speech_bubble.png");
 
@@ -46,7 +46,7 @@ public class TextBubbleRenderer {
         List<Entity> entities = level.getEntities(cameraEntity, boundingBox);
         for (Entity entity : entities) {
             if (!(entity instanceof Villager villager)) continue;  // ✅ skip non-villagers
-            String tagText = villager.getPersistentData().getString(SPEECH_BUBBLE_RENDER_TAG);
+            String tagText = villager.getPersistentData().getString(SpeechManager.SPEECH_BUBBLE_TAG);
             if (tagText.isEmpty()) continue;                       // ✅ skip untagged villagers
 
             renderSpeechBubble(event.getPoseStack(), event.getCamera(), villager, tagText);

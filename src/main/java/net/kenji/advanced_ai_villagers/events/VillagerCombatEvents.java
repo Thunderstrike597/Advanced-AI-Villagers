@@ -1,6 +1,7 @@
 package net.kenji.advanced_ai_villagers.events;
 
 import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
+import net.kenji.advanced_ai_villagers.api.SpeechManager;
 import net.kenji.advanced_ai_villagers.api.context.ContextManager;
 import net.kenji.advanced_ai_villagers.api.model.VillagerAiModel;
 import net.kenji.advanced_ai_villagers.client.render.TextBubbleRenderer;
@@ -59,9 +60,9 @@ public class VillagerCombatEvents {
                     // We'll replace this with a speech bubble later
                     villager.level().players().forEach(player ->{
                           if(player instanceof ServerPlayer serverPlayer){
-                            ModPacketHandler.sendToPlayer(new ClientTagSyncPacket(villager.getId(), response), serverPlayer);
-                            villager.getPersistentData().putString(TextBubbleRenderer.SPEECH_BUBBLE_RENDER_TAG, response);
-                            }
+                              SpeechManager.addVillagerSpeech(villager, serverPlayer, response);
+
+                          }
                         }
                     );
                 });
