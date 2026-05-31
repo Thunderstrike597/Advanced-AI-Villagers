@@ -27,7 +27,6 @@ public class TickEvents {
         if (tagText.isEmpty()) return;
 
         int villagerDecayCounter = SpeechManager.speechCountMap.getOrDefault(villager.getUUID(), -1);
-        Log.info("Speech Counter: " + villagerDecayCounter);
         if (villagerDecayCounter == -1) {
             SpeechManager.speechCountMap.put(villager.getUUID(), SpeechManager.SPEECH_DECAY_TIME);
         } else if (villagerDecayCounter > 0) {
