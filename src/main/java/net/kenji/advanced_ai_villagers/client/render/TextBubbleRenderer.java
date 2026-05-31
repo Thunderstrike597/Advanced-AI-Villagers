@@ -32,7 +32,7 @@ import java.util.List;
 public class TextBubbleRenderer {
 
 
-    private static final double BUBBLE_RENDER_RANGE = 40;
+    private static final double BUBBLE_RENDER_RANGE = 12;
     private static final ResourceLocation SPEECH_BUBBLE_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(AdvancedAiVillagers.MODID, "textures/gui/speech_bubble.png");
 
@@ -60,8 +60,8 @@ public class TextBubbleRenderer {
         Vec3 camPos = camera.getPosition();
 
         float partialTick = Minecraft.getInstance().getPartialTick();
-        double horizontalOffset = -0.8; // positive = right from villager's perspective (world X)
-        double verticalOffset   = -1; // negative = lower
+        double horizontalOffset = -0.675; // positive = right from villager's perspective (world X)
+        double verticalOffset   = -0.75; // negative = lower
 
         double x = Mth.lerp(partialTick, entity.xOld, entity.getX()) - camPos.x;
         double y = Mth.lerp(partialTick, entity.yOld, entity.getY()) - camPos.y + entity.getBbHeight() + 0.5;
@@ -72,7 +72,7 @@ public class TextBubbleRenderer {
         poseStack.mulPose(camera.rotation());
 
         poseStack.translate(horizontalOffset, verticalOffset, 0f);
-        float scale = 0.025f;
+        float scale = 0.0145f;
         poseStack.scale(-scale, -scale, scale);
 
         MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();

@@ -12,8 +12,10 @@ import java.util.Map;
 import java.util.UUID;
 
 public class SpeechManager {
+    public static final Map<UUID, String> speechTrackMap = new HashMap<>();
+
     public static final Map<UUID, Integer> speechCountMap = new HashMap<>();
-    public static final int SPEECH_DECAY_TIME = 160 * 2;
+    public static final int SPEECH_DECAY_TIME = 260 * 2;
 
     public static final String SPEECH_BUBBLE_TAG = "villager_speech_bubble";
 

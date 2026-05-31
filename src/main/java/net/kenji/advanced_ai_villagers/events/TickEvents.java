@@ -26,6 +26,12 @@ public class TickEvents {
         String tagText = villager.getPersistentData().getString(SpeechManager.SPEECH_BUBBLE_TAG);
         if (tagText.isEmpty()) return;
 
+        if(!tagText.equals(SpeechManager.speechTrackMap.getOrDefault(villager.getUUID(), ""))){
+            SpeechManager.speechTrackMap.put(villager.getUUID(), tagText);
+            SpeechManager.speechCountMap.put(villager.getUUID(), SpeechManager.SPEECH_DECAY_TIME);
+        }
+
+
         int villagerDecayCounter = SpeechManager.speechCountMap.getOrDefault(villager.getUUID(), -1);
         if (villagerDecayCounter == -1) {
             SpeechManager.speechCountMap.put(villager.getUUID(), SpeechManager.SPEECH_DECAY_TIME);
@@ -37,5 +43,6 @@ public class TickEvents {
             });
             SpeechManager.speechCountMap.remove(villager.getUUID());
         }
+
     }
 }

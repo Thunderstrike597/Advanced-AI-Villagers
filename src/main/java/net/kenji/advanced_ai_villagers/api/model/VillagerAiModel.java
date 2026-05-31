@@ -26,6 +26,10 @@ public class VillagerAiModel {
     private static final Map<UUID, List<String>> recentResponses = new HashMap<>();
     private static final int RECENT_RESPONSE_LIMIT = 5;
 
+    private static final boolean USE_MULTI_CONVERSATION = false;
+    private static final Map<UUID, List<String[]>> conversationHistory = new HashMap<>();
+    private static final int MAX_HISTORY_TURNS = 3;
+
     // Call this once when the mod starts up
     public static void load() {
         try {
@@ -80,8 +84,29 @@ public class VillagerAiModel {
         if (!loaded) return "";
 
         try {
-            // Match the training format exactly
+
+
+
             String prompt = "<|context|> " + context + " <|player|> " + playerMessage + " <|villager|>";
+
+            if(!USE_MULTI_CONVERSATION) {
+                // Build conversation history string
+                List<String[]> history = conversationHistory.getOrDefault(villagerUUID, new ArrayList<>());
+
+                StringBuilder promptBuilder = new StringBuilder();
+                promptBuilder.append("<|context|> ").append(context).append(" ");
+
+                // Append previous turns
+                for (String[] turn : history) {
+                    promptBuilder.append("<|player|> ").append(turn[0]).append(" ");
+                    promptBuilder.append("<|villager|> ").append(turn[1]).append(" ");
+                }
+
+                // Match the training format exactly
+                promptBuilder.append("<|player|> ").append(playerMessage).append(" <|villager|>");
+
+                prompt = promptBuilder.toString();
+            }
             Log.info("FULL Ai Message and Prompt: " + prompt);
             long[] tokenIds = tokenizer.encode(prompt);
             int promptLength = tokenIds.length;
@@ -152,8 +177,8 @@ public class VillagerAiModel {
             if (recent.size() > RECENT_RESPONSE_LIMIT) recent.remove(0);
             recentResponses.put(villagerUUID, recent);
 
+            saveResponse(villagerUUID, playerMessage, response);
             return response;
-
         } catch (Exception e) {
             LOGGER.error("Generation failed: " + e.getMessage());
             return "";
@@ -201,6 +226,15 @@ public class VillagerAiModel {
 
         return cleaned.isEmpty() ? "Hmm hmm! Hello there." : cleaned;
     }
+
+    private static void saveResponse(UUID villagerUUID, String playerMessage, String response){
+        List<String[]> hist = conversationHistory.getOrDefault(villagerUUID, new ArrayList<>());
+        hist.add(new String[]{playerMessage, response});
+        if (hist.size() > MAX_HISTORY_TURNS) hist.remove(0); // trim oldest
+        conversationHistory.put(villagerUUID, hist);
+    }
+
+
     private static boolean endsWithSentencePunctuation(String text) {
         if (text.isEmpty()) return false;
         char last = text.charAt(text.length() - 1);

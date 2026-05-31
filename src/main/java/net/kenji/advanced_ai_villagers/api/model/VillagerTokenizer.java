@@ -20,20 +20,29 @@ public class VillagerTokenizer {
     private static final int EOS_TOKEN = 50256;
     public boolean load() {
         try {
-            InputStream stream = VillagerTokenizer.class.getResourceAsStream(
-                    "/assets/" + AdvancedAiVillagers.MODID + "/model/tokenizer.json"
-            );
+            String[] tokenizerFiles = {
+                    "tokenizer.json",
+                    "tokenizer_config.json",
+                    "vocab.json",
+                    "merges.txt",
+                    "special_tokens_map.json"
+            };
 
-            if (stream == null) {
-                LOGGER.error("tokenizer.json not found!");
-                return false;
+            Path tempDir = Files.createTempDirectory("villagerai_tokenizer");
+
+            for (String fileName : tokenizerFiles) {
+                InputStream stream = VillagerTokenizer.class.getResourceAsStream(
+                        "/assets/" + AdvancedAiVillagers.MODID + "/model/" + fileName
+                );
+                if (stream == null) {
+                    LOGGER.warn("Tokenizer file not found, skipping: " + fileName);
+                    continue;
+                }
+                Files.copy(stream, tempDir.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
             }
 
-            // Copy tokenizer.json to temp file
-            Path temp = Files.createTempFile("tokenizer", ".json");
-            Files.copy(stream, temp, StandardCopyOption.REPLACE_EXISTING);
-
-            tokenizer = HuggingFaceTokenizer.newInstance(temp);
+            // Point at the directory, not a single file
+            tokenizer = HuggingFaceTokenizer.newInstance(tempDir);
 
             LOGGER.info("Tokenizer loaded successfully!");
             return true;

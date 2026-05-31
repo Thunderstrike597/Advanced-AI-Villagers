@@ -183,8 +183,8 @@ dependencies {
     jarJar('ai.djl:api:0.28.0') {
         jarJar.ranged(it, '[0.28.0, 0.29.0)')
     }
-    compileOnly "ai.djl.huggingface:tokenizers:0.28.0"
-    jarJar('ai.djl.huggingface:tokenizers:0.28.0') {
+    compileOnly "ai.djl.huggingface:tokenizers:0.34.0"
+    jarJar('ai.djl.huggingface:tokenizers:0.34.0') {
         jarJar.ranged(it, '[0.28.0, 0.29.0)')
     }
 
