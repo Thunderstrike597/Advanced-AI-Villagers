@@ -19,10 +19,12 @@ public class VillagerAiModel {
     private static VillagerTokenizer tokenizer = new VillagerTokenizer();
 
     public static final float TEMPERATURE_PRESET = 0.42F;
-    public static final float TEMPERATURE_CHAT = 0.64F;
+    public static final float TEMPERATURE_CHAT = 0.575F;
     public static final float REPETITION_PENALTY = 1.8F;
     public static final int PHRASE_REPEAT_LIMIT = 3;
 
+    private static final Map<UUID, List<String>> recentResponses = new HashMap<>();
+    private static final int RECENT_RESPONSE_LIMIT = 5;
 
     // Call this once when the mod starts up
     public static void load() {
@@ -74,7 +76,7 @@ public class VillagerAiModel {
         }
     }
 
-    public static String generate(String playerMessage, String context, float temperature, int maxTokens) {
+    public static String generateResponse(String playerMessage, String context, float temperature, int maxTokens, UUID villagerUUID) {
         if (!loaded) return "";
 
         try {
@@ -101,7 +103,8 @@ public class VillagerAiModel {
                 int nextToken = sampleWithTemperature(lastLogits, temperature, REPETITION_PENALTY, tokenIds);
 
                 // Stop at EOS or endoftext token
-                if (nextToken == 50256) break;
+                if (nextToken == 50256) break; // EOS endoftext
+                if (nextToken == 50260) break; // PAD token
                 if (nextToken == 198) break;
 
                 tokenIds = appendToken(tokenIds, nextToken);
@@ -134,6 +137,20 @@ public class VillagerAiModel {
                     response = response.substring(0, lastPunctuation + 1).trim();
                 }
             }
+            response = cleanVillagerResponse(response);
+            response = response.replaceAll("[_\\s]{3,}", " ").trim();
+            response = response.replaceAll("_+", "").trim();
+
+            List<String> recent = recentResponses.getOrDefault(villagerUUID, new ArrayList<>());
+            for (String prev : recent) {
+                if (response.toLowerCase().contains("get inside") && prev.toLowerCase().contains("get inside")) {
+                    // Force regenerate once with higher temperature
+                    response = generateResponse(playerMessage, context, temperature + 0.2f, maxTokens, villagerUUID);
+                }
+            }
+            recent.add(response);
+            if (recent.size() > RECENT_RESPONSE_LIMIT) recent.remove(0);
+            recentResponses.put(villagerUUID, recent);
 
             return response;
 
@@ -141,6 +158,48 @@ public class VillagerAiModel {
             LOGGER.error("Generation failed: " + e.getMessage());
             return "";
         }
+    }
+
+    private static String cleanVillagerResponse(String raw) {
+        if (raw == null || raw.isEmpty()) {
+            return "Hmm hmm! Hello there.";
+        }
+
+        String cleaned = raw.trim()
+                .replaceAll("^[Hh]mm+[.!? ]*", "")
+                .replaceAll("^[Hh]rrm+[.!? ]*", "")
+                .replace("<|endoftext|>", "")
+                .replace("--", "")
+                .replace("~", "")
+                .replace("[", "")
+                .replace("]", "")
+                .replace("�", "")           // common unicode artifacts
+                .replaceAll("[-=]{3,}", "") // remove long dashes
+                .replaceAll("\\s+", " ")
+                .replace("¯", "")
+                .replace("|", "")
+                .replace("/", "")
+                .replace(">", "")
+                .replace("<", "")
+                .replace("\\", "")
+                .replace("^", "")
+                .replace("{", "")
+                .replace("}", "")
+                .replace("&", "")
+                .replace("*", "")
+                .replace("(", "")
+                .replace(")", "")
+                .replace("$", "")
+                .replace("@", "")
+                .replace("%", "")
+                .replace("=", "")
+                .replace("_", "")
+                .trim();
+
+        // Remove any trailing special characters
+        cleaned = cleaned.replaceAll("[^\\w\\s.,!?'-]+$", "");
+
+        return cleaned.isEmpty() ? "Hmm hmm! Hello there." : cleaned;
     }
     private static boolean endsWithSentencePunctuation(String text) {
         if (text.isEmpty()) return false;

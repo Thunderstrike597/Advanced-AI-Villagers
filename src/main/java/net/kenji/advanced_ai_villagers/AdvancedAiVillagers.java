@@ -2,6 +2,7 @@ package net.kenji.advanced_ai_villagers;
 
 import com.mojang.logging.LogUtils;
 import net.kenji.advanced_ai_villagers.api.model.VillagerAiModel;
+import net.kenji.advanced_ai_villagers.network.ModPacketHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -36,6 +37,7 @@ public class AdvancedAiVillagers {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(VillagerAiModel::load);
+        event.enqueueWork(ModPacketHandler::register);
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call

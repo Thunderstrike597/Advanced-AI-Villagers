@@ -3,6 +3,9 @@ package net.kenji.advanced_ai_villagers.events;
 import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
 import net.kenji.advanced_ai_villagers.api.context.ContextManager;
 import net.kenji.advanced_ai_villagers.api.model.VillagerAiModel;
+import net.kenji.advanced_ai_villagers.client.render.TextBubbleRenderer;
+import net.kenji.advanced_ai_villagers.network.ClientTagSyncPacket;
+import net.kenji.advanced_ai_villagers.network.ModPacketHandler;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.npc.Villager;
@@ -37,7 +40,7 @@ public class PlayerChatEvents {
             // strip the "Context: " prefix since the prompt template handles that
             context = context.replace("Context: ", "");
 
-            String response = VillagerAiModel.generate(message, context, VillagerAiModel.TEMPERATURE_CHAT, 25);
+            String response = VillagerAiModel.generateResponse(message, context, VillagerAiModel.TEMPERATURE_CHAT, 25, nearest.getUUID());
             Log.info("Response: " + response);
             // Replace name placeholder
             response = response.replace("VILLAGER_NAME", nearest.getName().getString());
@@ -45,9 +48,8 @@ public class PlayerChatEvents {
             if (!response.isEmpty()) {
                 String finalResponse = response;
                 nearest.getServer().execute(() -> {
-                    player.sendSystemMessage(
-                            Component.literal("[" + nearest.getName().getString() + "]: " + finalResponse)
-                    );
+                    ModPacketHandler.sendToPlayer(new ClientTagSyncPacket(nearest.getId(), finalResponse), player);
+                    nearest.getPersistentData().putString(TextBubbleRenderer.SPEECH_BUBBLE_RENDER_TAG, finalResponse);
                 });
             }
         });

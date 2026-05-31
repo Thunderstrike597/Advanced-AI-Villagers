@@ -3,7 +3,11 @@ package net.kenji.advanced_ai_villagers.events;
 import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
 import net.kenji.advanced_ai_villagers.api.context.ContextManager;
 import net.kenji.advanced_ai_villagers.api.model.VillagerAiModel;
+import net.kenji.advanced_ai_villagers.client.render.TextBubbleRenderer;
+import net.kenji.advanced_ai_villagers.network.ClientTagSyncPacket;
+import net.kenji.advanced_ai_villagers.network.ModPacketHandler;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -45,7 +49,7 @@ public class VillagerCombatEvents {
         Thread aiThread = new Thread(() -> {
             Log.info("Model loaded state: " + VillagerAiModel.isLoaded());
             String context = ContextManager.getVillagerContext(villager).replace("Context: ", "");
-            String response = VillagerAiModel.generate(buildSituation(villager), context, VillagerAiModel.TEMPERATURE_PRESET, 15);
+            String response = VillagerAiModel.generateResponse(buildSituation(villager), context, VillagerAiModel.TEMPERATURE_PRESET, 15, villagerID);
             Log.info("Logging Villager Hurt Response: " + response);
 
             if (!response.isEmpty()) {
@@ -53,10 +57,12 @@ public class VillagerCombatEvents {
                 villager.getServer().execute(() -> {
                     // Displays as chat message for now
                     // We'll replace this with a speech bubble later
-                    villager.level().players().forEach(player ->
-                        player.sendSystemMessage(
-                            Component.literal("[" + villager.getName().getString() + "]: " + response)
-                        )
+                    villager.level().players().forEach(player ->{
+                          if(player instanceof ServerPlayer serverPlayer){
+                            ModPacketHandler.sendToPlayer(new ClientTagSyncPacket(villager.getId(), response), serverPlayer);
+                            villager.getPersistentData().putString(TextBubbleRenderer.SPEECH_BUBBLE_RENDER_TAG, response);
+                            }
+                        }
                     );
                 });
             }

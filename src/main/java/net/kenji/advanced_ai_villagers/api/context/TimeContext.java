@@ -17,23 +17,15 @@ public enum TimeContext implements IContext {
         this.contextName = contextName;
         this.timeRange = timeRange;
     }
-    public static TimeContext getContextFromTime(long time){
-        if(time > DAWN.timeRange.getFirst() && time <= DAWN.timeRange.getSecond()){
-            return null;
-        }
-        if(time > MORNING.timeRange.getFirst() && time <= MORNING.timeRange.getSecond()){
-            return null;
-        }
-        if(time > DUSK.timeRange.getFirst() && time <= DUSK.timeRange.getSecond()){
-            return DUSK;
-        }
-        if(time > NIGHT.timeRange.getFirst() && time <= NIGHT.timeRange.getSecond()){
-            return NIGHT;
-        }
-        if(time > MIDNIGHT.timeRange.getFirst() && time <= MIDNIGHT.timeRange.getSecond()){
-            return NIGHT;
-        }
-        return null;
+    public static TimeContext getContextFromTime(long time) {
+        long t = time % 24000; // normalise in case it exceeds 24000
+        if (t >= 23000) return DAWN;
+        if (t >= 18000) return MIDNIGHT;
+        if (t >= 13000) return NIGHT;
+        if (t >= 12000) return DUSK;
+        if (t >= 6000) return DAY;
+        if (t >= 1000) return MORNING;
+        return DAWN;
     }
 
     public Pair<Integer, Integer> getTimeRange(){
