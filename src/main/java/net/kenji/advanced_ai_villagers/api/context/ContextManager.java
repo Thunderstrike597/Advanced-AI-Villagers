@@ -29,16 +29,18 @@ public class ContextManager {
     public static String getVillagerContext(Villager villager) {
         List<IContext> contexts = new ArrayList<>();
         contexts.add(getLocationContext(villager));
+        contexts.add(getTimeContext(villager));
         contexts.add(getShelterContext(villager));
         contexts.add(getThreatContext(villager));
-        if(getLocationContext(villager) != null)
-            contexts.add(getTimeContext(villager));
+
 
         List<String> contextNames = new ArrayList<>();
         contexts.forEach(iContext ->{
             if(iContext != null)
                 contextNames.add(iContext.getContextType() + "=" + iContext.getContextName());
         });
+        contextNames.add("Health=Full");
+        contextNames.add("Rep=Neutral");
         return "Context: " + String.join(", ", contextNames);
     }
 

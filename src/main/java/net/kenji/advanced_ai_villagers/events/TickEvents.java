@@ -10,6 +10,7 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jline.utils.Log;
 
 import java.util.Comparator;
 import java.util.UUID;
@@ -26,19 +27,14 @@ public class TickEvents {
         if (tagText.isEmpty()) return;
 
         int villagerDecayCounter = SpeechManager.speechCountMap.getOrDefault(villager.getUUID(), -1);
-
+        Log.info("Speech Counter: " + villagerDecayCounter);
         if (villagerDecayCounter == -1) {
-            // First tick for this bubble — initialize and do nothing else yet
             SpeechManager.speechCountMap.put(villager.getUUID(), SpeechManager.SPEECH_DECAY_TIME);
-            return; // ✅ don't fall through to the <= 0 check
         } else if (villagerDecayCounter > 0) {
             SpeechManager.speechCountMap.put(villager.getUUID(), villagerDecayCounter - 1);
         } else {
-            // villagerDecayCounter == 0, time's up
             villager.level().players().forEach(player -> {
-                if (player instanceof ServerPlayer serverPlayer) {
-                    SpeechManager.addVillagerSpeech(villager, serverPlayer, "");
-                }
+                SpeechManager.addVillagerSpeech(villager, player, "");
             });
             SpeechManager.speechCountMap.remove(villager.getUUID());
         }

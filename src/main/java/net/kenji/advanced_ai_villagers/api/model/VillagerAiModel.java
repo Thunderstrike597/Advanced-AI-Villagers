@@ -20,7 +20,7 @@ public class VillagerAiModel {
 
     public static final float TEMPERATURE_PRESET = 0.42F;
     public static final float TEMPERATURE_CHAT = 0.575F;
-    public static final float REPETITION_PENALTY = 1.8F;
+    public static final float REPETITION_PENALTY = 1.12F;
     public static final int PHRASE_REPEAT_LIMIT = 3;
 
     private static final Map<UUID, List<String>> recentResponses = new HashMap<>();

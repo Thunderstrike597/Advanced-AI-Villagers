@@ -100,9 +100,8 @@ public class TextBubbleRenderer {
         float bubbleY = -bubbleH;  // render upward from anchor point
 
         // --- Draw speech bubble texture ---
-        drawTexturedQuad(poseStack, bufferSource, bubbleX, bubbleY, bubbleW, bubbleH);
+        drawTexturedQuad(poseStack, bufferSource, bubbleX, bubbleY, bubbleW, bubbleH,1);
 
-        poseStack.translate(0, 0, -0.01f); // small forward offset in local space.
 
         // --- Draw each line of text centered inside the bubble ---
         // Text sits in the upper portion; tail is at the bottom
@@ -123,20 +122,63 @@ public class TextBubbleRenderer {
                     LightTexture.FULL_BRIGHT
             );
         }
+        drawTexturedQuad(poseStack, bufferSource, bubbleX, bubbleY, bubbleW, bubbleH, 60); // ~25% alpha
+        poseStack.translate(0, 0, -0.01f); // small forward offset in local space.
+
+        drawTextLines(poseStack, bufferSource, font, lines, lineHeight, textAreaTop, true, 80);
+
+        bufferSource.endBatch();
+        // --- Draw VISIBLE pass on top (in front of walls, full opacity) ---
+        drawTexturedQuad(poseStack, bufferSource, bubbleX, bubbleY, bubbleW, bubbleH, 255);
+        poseStack.translate(0, 0, -0.01f); // small forward offset in local space.
+
+        drawTextLines(poseStack, bufferSource, font, lines, lineHeight, textAreaTop, false, 255);
 
         bufferSource.endBatch();
         poseStack.popPose();
     }
 
-    private static void drawTexturedQuad(PoseStack poseStack, MultiBufferSource bufferSource,
-                                         float x, float y, float w, float h) {
-        Matrix4f matrix = poseStack.last().pose();
-        VertexConsumer buf = bufferSource.getBuffer(RenderType.text(SPEECH_BUBBLE_TEXTURE));
+    private static void drawTextLines(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource,
+                                      Font font, List<FormattedCharSequence> lines,
+                                      int lineHeight, float textAreaTop,
+                                      boolean seeThrough, int alpha) {
+        // Pack alpha into the color int
+        int color = (alpha << 24) | 0x222222;
 
-        // quad covers (x, y) to (x+w, y+h), UV 0→1
-        buf.vertex(matrix, x,     y + h, 0).color(255,255,255,255).uv(0,1).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        buf.vertex(matrix, x + w, y + h, 0).color(255,255,255,255).uv(1,1).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        buf.vertex(matrix, x + w, y,     0).color(255,255,255,255).uv(1,0).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        buf.vertex(matrix, x,     y,     0).color(255,255,255,255).uv(0,0).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        Font.DisplayMode mode = seeThrough ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL;
+
+        for (int i = 0; i < lines.size(); i++) {
+            FormattedCharSequence line = lines.get(i);
+            float lineX = -font.width(line) / 2f;
+            float lineY = textAreaTop + i * lineHeight;
+            font.drawInBatch(
+                    line,
+                    lineX, lineY,
+                    color,
+                    false,
+                    poseStack.last().pose(),
+                    bufferSource,
+                    mode,
+                    0,
+                    LightTexture.FULL_BRIGHT
+            );
+        }
+    }
+
+    private static void drawTexturedQuad(PoseStack poseStack, MultiBufferSource bufferSource,
+                                         float x, float y, float w, float h, int alpha) {
+        Matrix4f matrix = poseStack.last().pose();
+
+        // Use textSeeThrough for the occluded pass, text for the visible pass
+        RenderType type = alpha < 255
+                ? RenderType.textSeeThrough(SPEECH_BUBBLE_TEXTURE)
+                : RenderType.text(SPEECH_BUBBLE_TEXTURE);
+
+        VertexConsumer buf = bufferSource.getBuffer(type);
+
+        buf.vertex(matrix, x,     y + h, 0).color(255, 255, 255, alpha).uv(0,1).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        buf.vertex(matrix, x + w, y + h, 0).color(255, 255, 255, alpha).uv(1,1).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        buf.vertex(matrix, x + w, y,     0).color(255, 255, 255, alpha).uv(1,0).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        buf.vertex(matrix, x,     y,     0).color(255, 255, 255, alpha).uv(0,0).uv2(LightTexture.FULL_BRIGHT).endVertex();
     }
 }

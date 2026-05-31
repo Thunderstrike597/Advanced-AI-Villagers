@@ -59,10 +59,8 @@ public class VillagerCombatEvents {
                     // Displays as chat message for now
                     // We'll replace this with a speech bubble later
                     villager.level().players().forEach(player ->{
-                          if(player instanceof ServerPlayer serverPlayer){
-                              SpeechManager.addVillagerSpeech(villager, serverPlayer, response);
+                        SpeechManager.addVillagerSpeech(villager, player, response);
 
-                          }
                         }
                     );
                 });

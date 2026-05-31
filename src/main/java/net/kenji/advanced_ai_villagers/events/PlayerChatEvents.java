@@ -45,6 +45,8 @@ public class PlayerChatEvents {
             Log.info("Response: " + response);
             // Replace name placeholder
             response = response.replace("VILLAGER_NAME", nearest.getName().getString());
+            response = response.replace("VILLAGERNAME", nearest.getName().getString());
+            response = response.replace("VILLAGER NAME", nearest.getName().getString());
 
             if (!response.isEmpty()) {
                 String finalResponse = response;
