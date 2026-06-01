@@ -36,6 +36,13 @@ public class TextBubbleRenderer {
     private static final ResourceLocation SPEECH_BUBBLE_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(AdvancedAiVillagers.MODID, "textures/gui/speech_bubble.png");
 
+    private static final float TEXT_BUBBLE_SCALE = 0.0145f;
+    private static final double TEXT_BUBBLE_OFFSET_X = -0.675;
+    private static final double TEXT_BUBBLE_OFFSET_Y = -0.75;
+
+    private static final float TEXT_PUSH_Z_AMOUNT = 0.08F;
+
+
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
@@ -60,8 +67,6 @@ public class TextBubbleRenderer {
         Vec3 camPos = camera.getPosition();
 
         float partialTick = Minecraft.getInstance().getPartialTick();
-        double horizontalOffset = -0.675; // positive = right from villager's perspective (world X)
-        double verticalOffset   = -0.75; // negative = lower
 
         double x = Mth.lerp(partialTick, entity.xOld, entity.getX()) - camPos.x;
         double y = Mth.lerp(partialTick, entity.yOld, entity.getY()) - camPos.y + entity.getBbHeight() + 0.5;
@@ -71,8 +76,8 @@ public class TextBubbleRenderer {
         poseStack.translate(x, y, z);
         poseStack.mulPose(camera.rotation());
 
-        poseStack.translate(horizontalOffset, verticalOffset, 0f);
-        float scale = 0.0145f;
+        poseStack.translate(TEXT_BUBBLE_OFFSET_X, TEXT_BUBBLE_OFFSET_Y, 0f);
+        float scale = TEXT_BUBBLE_SCALE;
         poseStack.scale(-scale, -scale, scale);
 
         MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
@@ -123,14 +128,14 @@ public class TextBubbleRenderer {
             );
         }
         drawTexturedQuad(poseStack, bufferSource, bubbleX, bubbleY, bubbleW, bubbleH, 60); // ~25% alpha
-        poseStack.translate(0, 0, -0.01f); // small forward offset in local space.
+        poseStack.translate(0, 0, -TEXT_PUSH_Z_AMOUNT); // small forward offset in local space.
 
         drawTextLines(poseStack, bufferSource, font, lines, lineHeight, textAreaTop, true, 80);
 
         bufferSource.endBatch();
         // --- Draw VISIBLE pass on top (in front of walls, full opacity) ---
         drawTexturedQuad(poseStack, bufferSource, bubbleX, bubbleY, bubbleW, bubbleH, 255);
-        poseStack.translate(0, 0, -0.01f); // small forward offset in local space.
+        poseStack.translate(0, 0, -TEXT_PUSH_Z_AMOUNT); // small forward offset in local space.
 
         drawTextLines(poseStack, bufferSource, font, lines, lineHeight, textAreaTop, false, 255);
 

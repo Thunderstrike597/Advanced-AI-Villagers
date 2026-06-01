@@ -26,7 +26,7 @@ public class VillagerAiModel {
     private static final Map<UUID, List<String>> recentResponses = new HashMap<>();
     private static final int RECENT_RESPONSE_LIMIT = 5;
 
-    private static final boolean USE_MULTI_CONVERSATION = false;
+    private static final boolean USE_CONVERSATION_HISTORY = true;
     private static final Map<UUID, List<String[]>> conversationHistory = new HashMap<>();
     private static final int MAX_HISTORY_TURNS = 3;
 
@@ -89,7 +89,7 @@ public class VillagerAiModel {
 
             String prompt = "<|context|> " + context + " <|player|> " + playerMessage + " <|villager|>";
 
-            if(!USE_MULTI_CONVERSATION) {
+            if(!USE_CONVERSATION_HISTORY) {
                 // Build conversation history string
                 List<String[]> history = conversationHistory.getOrDefault(villagerUUID, new ArrayList<>());
 
