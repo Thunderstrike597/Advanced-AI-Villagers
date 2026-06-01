@@ -4,11 +4,6 @@ import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
 import net.kenji.advanced_ai_villagers.api.SpeechManager;
 import net.kenji.advanced_ai_villagers.api.context.ContextManager;
 import net.kenji.advanced_ai_villagers.api.model.VillagerAiModel;
-import net.kenji.advanced_ai_villagers.client.render.TextBubbleRenderer;
-import net.kenji.advanced_ai_villagers.network.ClientTagSyncPacket;
-import net.kenji.advanced_ai_villagers.network.ModPacketHandler;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -49,7 +44,7 @@ public class VillagerCombatEvents {
         // Run inference off the main thread so it doesn't freeze the game
         Thread aiThread = new Thread(() -> {
             Log.info("Model loaded state: " + VillagerAiModel.isLoaded());
-            String context = ContextManager.getVillagerContext(villager).replace("Context: ", "");
+            String context = ContextManager.getVillagerCombatContext(villager);
             String response = VillagerAiModel.generateResponse(buildSituation(villager), context, VillagerAiModel.TEMPERATURE_PRESET, 15, villagerID);
             Log.info("Logging Villager Hurt Response: " + response);
 

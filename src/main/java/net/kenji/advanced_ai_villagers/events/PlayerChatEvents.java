@@ -4,10 +4,6 @@ import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
 import net.kenji.advanced_ai_villagers.api.SpeechManager;
 import net.kenji.advanced_ai_villagers.api.context.ContextManager;
 import net.kenji.advanced_ai_villagers.api.model.VillagerAiModel;
-import net.kenji.advanced_ai_villagers.client.render.TextBubbleRenderer;
-import net.kenji.advanced_ai_villagers.network.ClientTagSyncPacket;
-import net.kenji.advanced_ai_villagers.network.ModPacketHandler;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraftforge.event.ServerChatEvent;
@@ -37,10 +33,7 @@ public class PlayerChatEvents {
 
         Thread aiThread = new Thread(() -> {
             villagerGroup.forEach((villager) ->{
-            String context = ContextManager.getVillagerContext(villager);
-            // context already returns "Loc=Village, Time=Day, Shelter=Outside" etc
-            // strip the "Context: " prefix since the prompt template handles that
-            context = context.replace("Context: ", "");
+            String context = ContextManager.getVillagerChatContext(villager);
 
             String response = VillagerAiModel.generateResponse(message, context, VillagerAiModel.TEMPERATURE_CHAT, 25, villager.getUUID());
             Log.info("Response: " + response);
