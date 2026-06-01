@@ -24,7 +24,7 @@ public enum ProfessionContext implements IContext {
 
     ProfessionContext(){}
 
-    public static ProfessionContext getProfessionContext(Villager villager) {
+    public static ProfessionContext getContext(Villager villager) {
         VillagerProfession profession = villager.getVillagerData().getProfession();
 
         if (profession == VillagerProfession.NONE || profession == VillagerProfession.NITWIT) return UNEMPLOYED;

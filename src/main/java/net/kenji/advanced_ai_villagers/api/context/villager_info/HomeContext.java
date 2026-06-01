@@ -12,10 +12,10 @@ public enum HomeContext implements IContext {
 
     HomeContext(){ }
 
-    public static HomeContext getHomeContext(Villager villager){
+    public static HomeContext getContext(Villager villager){
        boolean hasBed = villager.getBrain()
                .getMemory(MemoryModuleType.HOME)
-               .isPresent();;
+               .isPresent();
 
         return hasBed ? HOUSED : HOMELESS;
     }

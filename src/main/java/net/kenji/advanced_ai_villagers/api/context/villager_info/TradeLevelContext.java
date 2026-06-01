@@ -15,7 +15,7 @@ public enum TradeLevelContext implements IContext {
         this.level = level;
     }
 
-    public static TradeLevelContext getTradeLevelContext(Villager villager){
+    public static TradeLevelContext getContext(Villager villager){
         for (TradeLevelContext level : TradeLevelContext.values()) {
             if (level.level == villager.getVillagerData().getLevel()) return level;
         }

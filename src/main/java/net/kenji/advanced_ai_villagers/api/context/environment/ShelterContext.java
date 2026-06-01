@@ -13,7 +13,7 @@ public enum ShelterContext implements IContext {
 
     ShelterContext(){ }
 
-    public static ShelterContext getShelterContext(Villager villager, double shelterSearchHeight) {
+    public static ShelterContext getContext(Villager villager, double shelterSearchHeight) {
         Level level = villager.level();
         BlockPos pos = villager.blockPosition();
 

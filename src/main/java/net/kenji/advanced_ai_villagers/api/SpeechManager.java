@@ -12,12 +12,20 @@ import java.util.Map;
 import java.util.UUID;
 
 public class SpeechManager {
+    public static final Map<UUID, Thread> threadTrackMap = new HashMap<>();
+
+
     public static final Map<UUID, String> speechTrackMap = new HashMap<>();
+    public static final Map<UUID, Integer> speechCounterMap = new HashMap<>();
 
     public static final Map<UUID, Integer> speechCountMap = new HashMap<>();
     public static final int SPEECH_DECAY_TIME = 260 * 2;
 
     public static final String SPEECH_BUBBLE_TAG = "villager_speech_bubble";
+
+    public static final float VILLAGER_TALK_CHANCE = 0.115F;
+    public static final int VILLAGER_TALK_COUNTER_MAX = 20;
+    public static final int THREAD_MAX_COUNT = 5;
 
 
     public static void addVillagerSpeech(Villager villager, Player player, String text){

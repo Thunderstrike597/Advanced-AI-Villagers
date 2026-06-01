@@ -15,7 +15,7 @@ public enum TimeContext implements IContext {
     TimeContext(int timeRange){
         this.time = timeRange;
     }
-    public static TimeContext getTimeContext(Villager villager) {
+    public static TimeContext getContext(Villager villager) {
         Level level = villager.level();
 
         long t = level.getDayTime() % 24000;

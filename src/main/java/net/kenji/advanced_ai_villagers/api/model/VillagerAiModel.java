@@ -185,6 +185,57 @@ public class VillagerAiModel {
         }
     }
 
+    public static String generateGreeting(String context, float temperature, int maxTokens, UUID villagerUUID) {
+        if (!loaded) return "";
+
+        try {
+            // Use a special prompt that signals the villager speaks first
+            String prompt = "<|context|> " + context + " <|villager|>";
+
+            Log.info("Generating villager greeting with prompt: " + prompt);
+            long[] tokenIds = tokenizer.encode(prompt);
+            int promptLength = tokenIds.length;
+
+            for (int i = 0; i < maxTokens; i++) {
+                long[][] inputArray = new long[1][tokenIds.length];
+                inputArray[0] = tokenIds;
+
+                OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputArray);
+                Map<String, OnnxTensor> inputs = new HashMap<>();
+                inputs.put("input_ids", inputTensor);
+
+                OrtSession.Result result = session.run(inputs);
+                float[][][] logits = (float[][][]) result.get(0).getValue();
+
+                float[] lastLogits = logits[0][tokenIds.length - 1];
+                applyNoRepeatNgram(lastLogits, tokenIds, PHRASE_REPEAT_LIMIT);
+
+                int nextToken = sampleWithTemperature(lastLogits, temperature, REPETITION_PENALTY, tokenIds);
+
+                if (nextToken == 50256) break;
+                if (nextToken == 50260) break;
+                if (nextToken == 198) break;
+
+                tokenIds = appendToken(tokenIds, nextToken);
+                inputTensor.close();
+                result.close();
+            }
+
+            String response = tokenizer.decode(Arrays.copyOfRange(tokenIds, promptLength, tokenIds.length)).trim();
+            response = response.replace("<|endoftext|>", "").trim();
+            if (response.contains("<|")) {
+                response = response.substring(0, response.indexOf("<|")).trim();
+            }
+
+            response = cleanVillagerResponse(response);
+            return response;
+
+        } catch (Exception e) {
+            LOGGER.error("Greeting generation failed: " + e.getMessage());
+            return "";
+        }
+    }
+
     private static String cleanVillagerResponse(String raw) {
         if (raw == null || raw.isEmpty()) {
             return "Hmm hmm! Hello there.";

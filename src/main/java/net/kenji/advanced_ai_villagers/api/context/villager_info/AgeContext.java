@@ -2,15 +2,13 @@ package net.kenji.advanced_ai_villagers.api.context.villager_info;
 
 import net.kenji.advanced_ai_villagers.api.interfaces.IContext;
 import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerProfession;
-import org.checkerframework.checker.units.qual.A;
 
 public enum AgeContext implements IContext {
     CHILD,
     ADULT;
 
     AgeContext(){ }
-    public static AgeContext getAgeContext(Villager villager){
+    public static AgeContext getContext(Villager villager){
         if(villager.isBaby())return CHILD;
         return ADULT;
     }

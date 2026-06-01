@@ -14,7 +14,7 @@ public enum HealthContext implements IContext {
     HealthContext(float healthPercent){
         this.healthPercent = healthPercent;
     }
-    public static HealthContext getHealthContext(Villager villager){
+    public static HealthContext getContext(Villager villager){
         float percent = (villager.getHealth() / villager.getMaxHealth()) * 100f;
 
         for(HealthContext context : HealthContext.values()){

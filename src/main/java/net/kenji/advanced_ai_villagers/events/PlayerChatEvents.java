@@ -33,7 +33,7 @@ public class PlayerChatEvents {
 
         Thread aiThread = new Thread(() -> {
             villagerGroup.forEach((villager) ->{
-            String context = ContextManager.getVillagerChatContext(villager);
+            String context = ContextManager.getPlayerChatContext(villager, player);
 
             String response = VillagerAiModel.generateResponse(message, context, VillagerAiModel.TEMPERATURE_CHAT, 25, villager.getUUID());
             Log.info("Response: " + response);

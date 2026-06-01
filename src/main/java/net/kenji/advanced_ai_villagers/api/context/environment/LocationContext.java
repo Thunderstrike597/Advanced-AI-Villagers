@@ -16,7 +16,7 @@ public enum LocationContext implements IContext {
 
     LocationContext(){ }
 
-    public static LocationContext getLocationContext(Villager villager, double villageSearchRadius, double villagerSearchCount){
+    public static LocationContext getContext(Villager villager, double villageSearchRadius, double villagerSearchCount){
         Level level = villager.level();
         if(!(level instanceof ServerLevel serverLevel)) return null;
 

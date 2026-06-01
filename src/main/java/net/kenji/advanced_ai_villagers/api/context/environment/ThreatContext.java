@@ -1,7 +1,6 @@
 package net.kenji.advanced_ai_villagers.api.context.environment;
 
 import net.kenji.advanced_ai_villagers.api.interfaces.IContext;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
@@ -24,7 +23,7 @@ public enum ThreatContext implements IContext {
         this.entityType = entityType;
     }
 
-    public static ThreatContext getThreatContext(Villager villager){
+    public static ThreatContext getContext(Villager villager){
         Brain<Villager> brain = villager.getBrain();
 
         Optional<LivingEntity> hostile =
