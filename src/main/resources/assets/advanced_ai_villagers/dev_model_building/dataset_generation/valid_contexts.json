@@ -1,0 +1,133 @@
+{
+  "Valid Contexts": {
+    "Details" : {
+      "Important": "Only Important if an Ai Is unsure about a request. If instructions make sense, the 'Details' block is un-needed",
+      "Notes": [
+        {
+          "Note": "This is a list containing current valid contexts"
+        },
+        {
+          "Note": "Any Contexts Generated MUST be in the exact same order as 'Contexts' list."
+        }
+      ]
+    },
+    "Contexts": [
+      {
+        "Name": "Loc",
+        "LocationContext": [
+          "Villager",
+          "Wild"
+        ]
+      },
+      {
+        "Name": "Time",
+        "TimeContext": [
+          "Morning",
+          "Day",
+          "Dusk",
+          "Night"
+        ]
+      },
+      {
+        "Name": "Shelter",
+        "ShelterContext": [
+          "Inside",
+          "Outside"
+        ]
+      },
+      {
+        "Name": "Threat",
+        "ThreatContext": [
+          "None",
+          "Zombie",
+          "Raid",
+          "Zombie_Villager",
+          "Unknown"
+        ]
+      },
+      {
+        "Name": "Health",
+        "HealthContext": [
+          "Full",
+          "Hurt",
+          "Critical"
+        ]
+      },
+      {
+        "Name": "Profession",
+        "ProfessionContext": [
+          "Unemployed",
+          "Armorer",
+          "Butcher",
+          "Cartographer",
+          "Cleric",
+          "Farmer",
+          "Fisherman",
+          "Fletcher",
+          "Leatherworker",
+          "Librarian",
+          "Mason",
+          "Nitwit",
+          "Shepard",
+          "Toolsmith",
+          "Weaponsmith",
+          "Special"
+        ]
+      },
+      {
+        "Name": "TradeLevel",
+        "TradeLevelContext": [
+          "Novice",
+          "Apprentice",
+          "Journeyman",
+          "Expert",
+          "Master"
+        ]
+      },
+      {
+        "Name": "Home",
+        "HomeContext": [
+          "Housed",
+          "Homeless"
+        ]
+      },
+      {
+        "Name": "Age",
+        "AgeContext": [
+          "Adult",
+          "Child"
+        ]
+      },
+      {
+        "Name": "Rep",
+        "RepContext": [
+          "Neutral",
+          "Positive",
+          "Negative"
+        ]
+      },
+      {
+        "Name": "Weather",
+        "WeatherContext": [
+          "Clear",
+          "Rain",
+          "Snow",
+          "Thunder"
+        ]
+      },
+      {
+        "Name": "Activity",
+        "ActivityContext": [
+          "Wandering",
+          "Working",
+          "Sleeping",
+          "Socializing",
+          "Trading"
+        ]
+      }
+    ]
+  },
+  "Examples":{
+    "Example Context": "Loc=Village, Time=Night, Shelter=Outside, Threat=Raid, Health=Critical, Profession=Farmer, TradeLevel=Novice, Home=Housed, Age=Adult, Rep=Neutral, Weather=Clear, Activity=Wandering"
+  }
+}

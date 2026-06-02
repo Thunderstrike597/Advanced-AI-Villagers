@@ -12,6 +12,7 @@ import java.util.Optional;
 public enum ThreatContext implements IContext {
     NONE(null),
     ZOMBIE(EntityType.ZOMBIE),
+    Raid(null),
     ZOMBIE_VILLAGER(EntityType.ZOMBIE_VILLAGER),
     PILLAGER(EntityType.PILLAGER),
     VINDICATOR(EntityType.VINDICATOR),
@@ -38,6 +39,7 @@ public enum ThreatContext implements IContext {
             }
             return UNKNOWN;
         }
+
         return NONE;
     }
 
