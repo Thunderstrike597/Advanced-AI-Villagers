@@ -32,7 +32,9 @@ public class VillagerAiModel {
 
     // Call this once when the mod starts up
     public static void load() {
+        Thread aiThread = new Thread(() -> {
         try {
+
             LOGGER.info("Loading Villager AI model...");
 
             env = OrtEnvironment.getEnvironment();
@@ -73,11 +75,13 @@ public class VillagerAiModel {
             }
 
             LOGGER.info("Villager AI model loaded successfully!");
-
         } catch (Exception e) {
             LOGGER.error("Failed to load Villager AI model: " + e.getMessage());
             e.printStackTrace();
         }
+        });
+        aiThread.setDaemon(true);
+        aiThread.start();
     }
 
     public static String generateResponse(String playerMessage, String context, float temperature, int maxTokens, UUID villagerUUID) {
@@ -130,7 +134,6 @@ public class VillagerAiModel {
                 // Stop at EOS or endoftext token
                 if (nextToken == 50256) break; // EOS endoftext
                 if (nextToken == 50260) break; // PAD token
-                if (nextToken == 198) break;
 
                 tokenIds = appendToken(tokenIds, nextToken);
                 inputTensor.close();

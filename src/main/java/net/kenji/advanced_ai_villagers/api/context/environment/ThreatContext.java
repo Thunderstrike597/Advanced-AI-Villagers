@@ -12,7 +12,7 @@ import java.util.Optional;
 public enum ThreatContext implements IContext {
     NONE(null),
     ZOMBIE(EntityType.ZOMBIE),
-    Raid(null),
+    ACTIVE_RAID(null),
     ZOMBIE_VILLAGER(EntityType.ZOMBIE_VILLAGER),
     PILLAGER(EntityType.PILLAGER),
     VINDICATOR(EntityType.VINDICATOR),

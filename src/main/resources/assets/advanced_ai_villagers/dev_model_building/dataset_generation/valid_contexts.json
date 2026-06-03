@@ -40,7 +40,7 @@
         "ThreatContext": [
           "None",
           "Zombie",
-          "Raid",
+          "Active_Raid",
           "Zombie_Villager",
           "Unknown"
         ]
@@ -124,10 +124,18 @@
           "Socializing",
           "Trading"
         ]
+      },
+      {
+        "Name": "RecentEvent",
+        "ActivityContext": [
+          "None",
+          "Raid_Survived",
+          "Villager_Death"
+        ]
       }
     ]
   },
   "Examples":{
-    "Example Context": "Loc=Village, Time=Night, Shelter=Outside, Threat=Raid, Health=Critical, Profession=Farmer, TradeLevel=Novice, Home=Housed, Age=Adult, Rep=Neutral, Weather=Clear, Activity=Wandering"
+    "Example Context": "Loc=Village, Time=Night, Shelter=Outside, Threat=Active_Raid, Health=Critical, Profession=Farmer, TradeLevel=Novice, Home=Housed, Age=Adult, Rep=Neutral, Weather=Clear, Activity=Wandering"
   }
 }

@@ -24,11 +24,13 @@ public class ContextManager {
         contexts.add(ThreatContext.getContext(villager));
         contexts.add(HealthContext.getContext(villager));
         contexts.add(ProfessionContext.getContext(villager));
-        contexts.add(AgeContext.getContext(villager));
         contexts.add(TradeLevelContext.getContext(villager));
-        contexts.add(AgeContext.getContext(villager));
         contexts.add(HomeContext.getContext(villager));
+        contexts.add(AgeContext.getContext(villager));
         contexts.add(ReputationContext.getContext(villager, player));
+        contexts.add(WeatherContext.getContext(villager));
+        contexts.add(ActivityContext.getContext(villager));
+        contexts.add(RecentEventContext.getContext(villager));
 
         List<String> contextNames = new ArrayList<>();
         contexts.forEach(iContext ->{

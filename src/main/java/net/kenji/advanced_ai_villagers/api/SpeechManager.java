@@ -19,7 +19,7 @@ public class SpeechManager {
     public static final Map<UUID, Integer> speechCounterMap = new HashMap<>();
 
     public static final Map<UUID, Integer> speechCountMap = new HashMap<>();
-    public static final int SPEECH_DECAY_TIME = 260 * 2;
+    public static final int SPEECH_DECAY_TIME = (int)(260 * 1.35);
 
     public static final String SPEECH_BUBBLE_TAG = "villager_speech_bubble";
 

@@ -45,7 +45,7 @@ public class TickEvents {
 
             if(randomChance > SpeechManager.VILLAGER_TALK_CHANCE) return;
             if(SpeechManager.threadTrackMap.get(villager.getUUID()) != null) return;
-            if(SpeechManager.threadTrackMap.size() >= 5)return;
+            if(SpeechManager.threadTrackMap.size() >= SpeechManager.THREAD_MAX_COUNT)return;
 
             Thread aiThread = new Thread(() -> {
                 try {
