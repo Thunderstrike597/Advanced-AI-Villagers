@@ -1,19 +1,24 @@
-package net.kenji.advanced_ai_villagers.api.context.environment;
+package net.kenji.advanced_ai_villagers.api.context.villager_info;
 
 import net.kenji.advanced_ai_villagers.api.interfaces.IContext;
 import net.minecraft.world.entity.npc.Villager;
 
 public enum RecentEventContext implements IContext {
-    NONE,
-    RAID_SURVIVED,
-    VILLAGER_DEATH;
+    NONE(""),
+    RAID_SURVIVED("raid_survived"),
+    VILLAGER_DEATH("villager_death");
 
 
+    final String tagName;
 
-
-    RecentEventContext(){
-
+    RecentEventContext(String tagName){
+        this.tagName = tagName;
     }
+
+    public String getTagName(){
+        return tagName;
+    }
+
     public static RecentEventContext getContext(Villager villager){
         return NONE;
     }

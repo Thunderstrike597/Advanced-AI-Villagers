@@ -17,11 +17,6 @@ PLAYER_INPUTS = [
     "looks like trouble nearby", "something feels off today",
     "the weather's been strange lately", "it's getting dark out",
 
-    # reactions / conversation filler
-    "that makes sense", "I didn't know that", "really?",
-    "tell me more", "go on", "huh, interesting", "fair enough",
-    "I hear you", "sounds tough", "I believe you",
-
     # player expressing themselves
     "I'm just passing through", "I'm looking for something",
     "I've been travelling a long time", "I'm a bit lost",

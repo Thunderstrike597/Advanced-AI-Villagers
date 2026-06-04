@@ -13,6 +13,14 @@
     },
     "Contexts": [
       {
+        "Name": "Personality",
+        "LocationContext": [
+          "Regular",
+          "Jolly",
+          "Rude"
+        ]
+      },
+      {
         "Name": "Loc",
         "LocationContext": [
           "Villager",

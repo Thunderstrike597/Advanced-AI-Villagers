@@ -1,6 +1,7 @@
 package net.kenji.advanced_ai_villagers.api.model;
 
 import ai.onnxruntime.*;
+import com.mojang.datafixers.util.Pair;
 import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,6 +30,9 @@ public class VillagerAiModel {
     private static final boolean USE_CONVERSATION_HISTORY = true;
     private static final Map<UUID, List<String[]>> conversationHistory = new HashMap<>();
     private static final int MAX_HISTORY_TURNS = 3;
+
+    // Separate history map for villager-to-villager exchanges
+    private static final Map<UUID, List<String[]>> villagerConversationHistory = new HashMap<>();
 
     // Call this once when the mod starts up
     public static void load() {
@@ -88,30 +92,26 @@ public class VillagerAiModel {
         if (!loaded) return "";
 
         try {
+            String prompt;
 
-
-
-            String prompt = "<|context|> " + context + " <|player|> " + playerMessage + " <|villager|>";
-
-            if(!USE_CONVERSATION_HISTORY) {
-                // Build conversation history string
+            if (USE_CONVERSATION_HISTORY) {
                 List<String[]> history = conversationHistory.getOrDefault(villagerUUID, new ArrayList<>());
 
                 StringBuilder promptBuilder = new StringBuilder();
                 promptBuilder.append("<|context|> ").append(context).append(" ");
 
-                // Append previous turns
                 for (String[] turn : history) {
                     promptBuilder.append("<|player|> ").append(turn[0]).append(" ");
                     promptBuilder.append("<|villager|> ").append(turn[1]).append(" ");
                 }
 
-                // Match the training format exactly
                 promptBuilder.append("<|player|> ").append(playerMessage).append(" <|villager|>");
-
                 prompt = promptBuilder.toString();
+            } else {
+                prompt = "<|context|> " + context + " <|player|> " + playerMessage + " <|villager|>";
             }
-            Log.info("FULL Ai Message and Prompt: " + prompt);
+
+            LOGGER.info("Full prompt: " + prompt);
             long[] tokenIds = tokenizer.encode(prompt);
             int promptLength = tokenIds.length;
 
@@ -188,7 +188,7 @@ public class VillagerAiModel {
         }
     }
 
-    public static String generateGreeting(String context, float temperature, int maxTokens, UUID villagerUUID) {
+    public static String generateVillagerGreeting(String context, float temperature, int maxTokens, UUID villagerUUID) {
         if (!loaded) return "";
 
         try {
@@ -237,6 +237,105 @@ public class VillagerAiModel {
             LOGGER.error("Greeting generation failed: " + e.getMessage());
             return "";
         }
+    }
+
+    // Add this new method for villager-to-villager responses
+    public static String generateVillagerReply(
+            String otherVillagerMessage,
+            String context,
+            float temperature,
+            int maxTokens,
+            UUID speakingVillagerUUID,
+            UUID listeningVillagerUUID) {
+
+        if (!loaded) return "";
+
+        try {
+            StringBuilder promptBuilder = new StringBuilder();
+            promptBuilder.append("<|context|> ").append(context).append(" ");
+
+            // Append this villager's conversation history with the other villager
+            // Key the history on a shared pair ID so both villagers share the same thread
+            UUID pairId = getPairId(speakingVillagerUUID, listeningVillagerUUID);
+            List<String[]> history = villagerConversationHistory.getOrDefault(pairId, new ArrayList<>());
+
+            for (String[] turn : history) {
+                promptBuilder.append("<|villager1|> ").append(turn[0]).append(" ");
+                promptBuilder.append("<|villager2|> ").append(turn[1]).append(" ");
+            }
+
+            // The other villager just said something — we are villager2 responding
+            promptBuilder.append("<|villager1|> ").append(otherVillagerMessage).append(" <|villager2|>");
+
+            String prompt = promptBuilder.toString();
+            LOGGER.info("Villager-to-villager prompt: " + prompt);
+
+            long[] tokenIds = tokenizer.encode(prompt);
+            int promptLength = tokenIds.length;
+
+            for (int i = 0; i < maxTokens; i++) {
+                long[][] inputArray = new long[1][tokenIds.length];
+                inputArray[0] = tokenIds;
+
+                OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputArray);
+                Map<String, OnnxTensor> inputs = new HashMap<>();
+                inputs.put("input_ids", inputTensor);
+
+                OrtSession.Result result = session.run(inputs);
+                float[][][] logits = (float[][][]) result.get(0).getValue();
+
+                float[] lastLogits = logits[0][tokenIds.length - 1];
+                applyNoRepeatNgram(lastLogits, tokenIds, PHRASE_REPEAT_LIMIT);
+
+                int nextToken = sampleWithTemperature(lastLogits, temperature, REPETITION_PENALTY, tokenIds);
+
+                if (nextToken == 50256) break;
+                if (nextToken == 50260) break;
+
+                tokenIds = appendToken(tokenIds, nextToken);
+                inputTensor.close();
+                result.close();
+            }
+
+            String response = tokenizer.decode(Arrays.copyOfRange(tokenIds, promptLength, tokenIds.length)).trim();
+            response = response.replace("<|endoftext|>", "").trim();
+            if (response.contains("<|")) {
+                response = response.substring(0, response.indexOf("<|")).trim();
+            }
+            response = cleanVillagerResponse(response);
+
+            // Save to the shared pair history
+            saveVillagerExchange(pairId, otherVillagerMessage, response);
+            return response;
+
+        } catch (Exception e) {
+            LOGGER.error("Villager reply generation failed: " + e.getMessage());
+            return "";
+        }
+    }
+
+    public static void clearVillagerConversation(UUID speakerUuid, UUID listerUuid){
+        if(villagerConversationHistory.get(speakerUuid) != null){
+            villagerConversationHistory.remove(speakerUuid);
+        }
+    }
+
+
+    // Deterministic shared ID for any two villagers regardless of who speaks first
+    private static UUID getPairId(UUID a, UUID b) {
+        if (a.compareTo(b) < 0) {
+            return UUID.nameUUIDFromBytes((a.toString() + b.toString()).getBytes());
+        } else {
+            return UUID.nameUUIDFromBytes((b.toString() + a.toString()).getBytes());
+        }
+    }
+
+
+    private static void saveVillagerExchange(UUID pairId, String villager1Msg, String villager2Response) {
+        List<String[]> hist = villagerConversationHistory.getOrDefault(pairId, new ArrayList<>());
+        hist.add(new String[]{villager1Msg, villager2Response});
+        if (hist.size() > MAX_HISTORY_TURNS) hist.remove(0);
+        villagerConversationHistory.put(pairId, hist);
     }
 
     private static String cleanVillagerResponse(String raw) {

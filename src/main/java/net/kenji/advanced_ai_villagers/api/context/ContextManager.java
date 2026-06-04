@@ -18,6 +18,7 @@ public class ContextManager {
 
     public static String getPlayerChatContext(Villager villager, Player player) {
         List<IContext> contexts = new ArrayList<>();
+        contexts.add(PersonalityContext.getContext(villager));
         contexts.add(LocationContext.getContext(villager, VILLAGE_SEARCH_RADIUS, VILLAGER_SEARCH_COUNT));
         contexts.add(TimeContext.getContext(villager));
         contexts.add(ShelterContext.getContext(villager, SHELTER_SEARCH_HEIGHT));
@@ -37,7 +38,7 @@ public class ContextManager {
             if(iContext != null)
                 contextNames.add(iContext.getContextType() + "=" + iContext.getContextName());
         });
-        return "Context: " + String.join(", ", contextNames);
+        return String.join(", ", contextNames);
     }
     public static String getVillagerChatContext(Villager villager) {
         List<IContext> contexts = new ArrayList<>();

@@ -140,6 +140,7 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
     mavenLocal()
+    maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }  // Needed for snapshots
     maven {
         name = "Illusive Soulworks maven"
         url = "https://maven.theillusivec4.top/"
@@ -179,15 +180,15 @@ dependencies {
     /*jarJar('com.microsoft.onnxruntime:onnxruntime:1.20.0') {
         jarJar.ranged(it, '[1.20.0,1.21.0)')
     }*/
-    compileOnly "ai.djl:api:0.28.0"
-    jarJar('ai.djl:api:0.28.0') {
-        jarJar.ranged(it, '[0.28.0, 0.29.0)')
+    compileOnly "ai.djl:api:0.36.0"
+    jarJar('ai.djl:api:0.36.0') {
+        jarJar.ranged(it, '[0.36.0, 0.37.0)')
     }
     compileOnly "ai.djl.huggingface:tokenizers:0.34.0"
     jarJar('ai.djl.huggingface:tokenizers:0.34.0') {
         jarJar.ranged(it, '[0.28.0, 0.29.0)')
     }
-
+    implementation "ai.djl.onnxruntime:onnxruntime-engine:0.28.0"
     /*jarJar('com.google.code.gson:gson:2.10.1') {
         jarJar.ranged(it, '[2.10.1,2.11.0)')
     }*/
@@ -201,7 +202,7 @@ dependencies {
     //implementation fg.deobf("curse.maven:weapons-of-miracles-epicfight-918614:7517612")
     //implementation fg.deobf("curse.maven:epic-fight-invincible-1184379:7679941")
     //implementation fg.deobf("curse.maven:corpse-316582:7018272")
-
+    implementation fg.deobf("curse.maven:simple-voice-chat-416089:8158492")
     implementation fg.deobf("curse.maven:packet-fixer-689467:7221527")
 
     //implementation fg.deobf("curse.maven:epic-fight-combat-hotbar-1461210:7717714")
