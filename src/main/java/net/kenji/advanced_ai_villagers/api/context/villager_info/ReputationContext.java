@@ -30,7 +30,7 @@ public enum ReputationContext implements IContext {
 
     @Override
     public String getContextType() {
-        return "Loc";
+        return "Rep";
     }
 
     @Override

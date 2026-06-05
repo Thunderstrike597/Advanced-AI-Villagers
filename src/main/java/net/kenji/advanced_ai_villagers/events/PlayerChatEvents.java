@@ -24,6 +24,6 @@ public class PlayerChatEvents {
 
         ServerPlayer player =  event.getPlayer();
 
-        SpeechManager.sendSpeechMessage(player, message);
+        SpeechManager.sendSpeechMessage(player, message, true);
     }
 }

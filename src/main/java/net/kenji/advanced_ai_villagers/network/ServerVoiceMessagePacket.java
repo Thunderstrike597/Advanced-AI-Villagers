@@ -32,9 +32,8 @@ public class ServerVoiceMessagePacket {
             ServerPlayer player = ctx.get().getSender();
 
             if(player == null)return;
-            if (player.level() instanceof ServerLevel serverLevel) {
-                SpeechManager.sendSpeechMessage(player, packet.message);
-            }
+            SpeechManager.sendSpeechMessage(player, packet.message, true);
+
         });
         ctx.get().setPacketHandled(true);
     }

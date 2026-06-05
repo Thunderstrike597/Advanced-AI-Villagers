@@ -3,17 +3,15 @@ package net.kenji.advanced_ai_villagers.api;
 import com.mojang.datafixers.util.Pair;
 import net.kenji.advanced_ai_villagers.api.context.ContextManager;
 import net.kenji.advanced_ai_villagers.api.model.VillagerAiModel;
-import net.kenji.advanced_ai_villagers.client.render.TextBubbleRenderer;
 import net.kenji.advanced_ai_villagers.network.ClientTagSyncPacket;
 import net.kenji.advanced_ai_villagers.network.ModPacketHandler;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import org.jline.utils.Log;
 
 import java.util.*;
-import java.util.logging.Level;
 
 public class SpeechManager {
     public static final Map<Pair<UUID, UUID>, Thread> threadTrackMap = new HashMap<>();
@@ -21,18 +19,24 @@ public class SpeechManager {
 
     public static final Map<UUID, String> speechTrackMap = new HashMap<>();
     public static final Map<UUID, Integer> speechCounterMap = new HashMap<>();
-
     public static final Map<UUID, Integer> speechCountMap = new HashMap<>();
+    public static final Map<UUID, Integer> captionCounterMap = new HashMap<>();
+
     public static final int SPEECH_DECAY_TIME = (int)(260 * 1.35);
+
+    public static final String PLAYER_SPEECH_TAG = "player_speech";
+
 
     public static final String SPEECH_BUBBLE_TAG = "villager_speech_bubble";
     public static final String PERSONALITY_TAG = "villager_personality";
     public static final String RECENT_EVENT_TAG = "villager_recent_event";
 
+
     public static final float VILLAGER_TALK_CHANCE = 0.115F;
     public static final int VILLAGER_TALK_COUNTER_MAX = 20;
+    public static final int CAPTION_COUNTER_MAX = 120;
     public static final int THREAD_MAX_COUNT = 5;
-    public static final double MAX_VILLAGER_TALK_DIST = 4.2F;
+    public static final double VILLAGER_TALK_DIST_MAX = 4.2F;
 
     public static final Map<Pair<UUID, UUID>, VillagerConversation> activeConversations = new HashMap<>();
 
@@ -59,8 +63,11 @@ public class SpeechManager {
         villager.getPersistentData().putString(SpeechManager.SPEECH_BUBBLE_TAG, text);
     }
 
-    public static void sendSpeechMessage(ServerPlayer player, String message){
+    public static void sendSpeechMessage(ServerPlayer player, String message, boolean useLookAngle){
         Villager nearest = findNearestVillager(player, 10); // within 10 blocks
+        if(useLookAngle)
+            findLookAtVillager(player, 10);
+
         List<Villager> villagerGroup = findVillagerGroup(player, 5, 2.5F, nearest);
 
         if (nearest == null && villagerGroup.isEmpty()) return; // no villager nearby, ignore
@@ -115,6 +122,21 @@ public class SpeechManager {
                         Villager.class,
                         player.getBoundingBox().inflate(range)
                 ).stream()
+                .min(Comparator.comparingDouble(v -> v.distanceTo(player)))
+                .orElse(null);
+    }
+    private static Villager findLookAtVillager(ServerPlayer player, double range) {
+        Vec3 eyePos = player.getEyePosition();
+        Vec3 lookVec = player.getLookAngle();
+
+        return player.level().getEntitiesOfClass(
+                        Villager.class,
+                        player.getBoundingBox().inflate(range)
+                ).stream().filter(v -> {
+                    Vec3 toVillager = v.getEyePosition().subtract(eyePos).normalize();
+                    double dot = lookVec.dot(toVillager);
+                    return dot > 0.866F;
+                })
                 .min(Comparator.comparingDouble(v -> v.distanceTo(player)))
                 .orElse(null);
     }

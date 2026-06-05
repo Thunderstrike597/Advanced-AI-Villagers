@@ -11,7 +11,6 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -49,7 +48,7 @@ public class TickEvents {
             Pair<UUID, UUID> pairKey = normalisedPair(villager.getUUID(), villagerTarget.getUUID());
             double dist = villager.position().distanceTo(villagerTarget.position());
 
-            if(dist > SpeechManager.MAX_VILLAGER_TALK_DIST) return;
+            if(dist > SpeechManager.VILLAGER_TALK_DIST_MAX) return;
 
 
             if (!villager.getPersistentData().getString(SpeechManager.SPEECH_BUBBLE_TAG).isEmpty()) return;
@@ -97,7 +96,7 @@ public class TickEvents {
 
                     // Safety: bail if either villager has been removed from the world
                     if (!responder.isAlive() || !other.isAlive()) break;
-                    if (responder.position().distanceTo(other.position()) > SpeechManager.MAX_VILLAGER_TALK_DIST) break;
+                    if (responder.position().distanceTo(other.position()) > SpeechManager.VILLAGER_TALK_DIST_MAX) break;
 
                     String context2 = ContextManager.getVillagerChatContext(responder);
                     String reply = VillagerAiModel.generateVillagerReply(

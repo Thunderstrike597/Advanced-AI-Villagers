@@ -1,15 +1,14 @@
 package net.kenji.advanced_ai_villagers.plugins.voice_chat;
 
-import ai.djl.modality.audio.translator.SpeechRecognitionTranslator;
 import de.maxhenkel.voicechat.api.ForgeVoicechatPlugin;
 import de.maxhenkel.voicechat.api.VoicechatApi;
 import de.maxhenkel.voicechat.api.VoicechatPlugin;
 import de.maxhenkel.voicechat.api.events.ClientSoundEvent;
 import de.maxhenkel.voicechat.api.events.EventRegistration;
 
-import de.maxhenkel.voicechat.api.events.MicrophoneMuteEvent;
 import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
 import net.kenji.advanced_ai_villagers.api.SpeechManager;
+import net.kenji.advanced_ai_villagers.api.speech_management.VoiceToTextHandler;
 import net.kenji.advanced_ai_villagers.network.ModPacketHandler;
 import net.kenji.advanced_ai_villagers.network.ServerVoiceMessagePacket;
 import net.minecraft.client.Minecraft;
@@ -26,7 +25,7 @@ public class VoiceToChatPlugin implements VoicechatPlugin {
     private boolean enabled = true;
 
     // Silence detection
-    private static final long SILENCE_TIMEOUT_MS = 500;
+    private static final long SILENCE_TIMEOUT_MS = 300;
     private volatile long lastFrameTime = 0;
     private volatile boolean flushScheduled = false;
 
@@ -80,14 +79,15 @@ public class VoiceToChatPlugin implements VoicechatPlugin {
         short[] fullAudio = flattenAudio(audioBuffer);
         audioBuffer.clear();
         if(fullAudio.length < 16000) return;
-        short[] finalAudio = fullAudio;
         Thread t = new Thread(() -> {
-            String text = handler.transcribe(finalAudio);
+            String text = handler.transcribe(fullAudio);
+            Log.info("Transcribed Audio: " + text);
             if (text != null && !text.isBlank()) {
                 Log.info("✅ Speech recognized: " + text);
                 Minecraft.getInstance().execute(() -> {
                     if (Minecraft.getInstance().player != null) {
                         ModPacketHandler.sendToServer(new ServerVoiceMessagePacket(text));
+                        Minecraft.getInstance().player.getPersistentData().putString(SpeechManager.PLAYER_SPEECH_TAG, text);
                     }
                 });
             }
