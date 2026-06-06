@@ -1,68 +1,18 @@
-package net.kenji.advanced_ai_villagers.events;
+package net.kenji.advanced_ai_villagers.api.handler;
 
 import com.mojang.datafixers.util.Pair;
-import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
-import net.kenji.advanced_ai_villagers.api.SpeechManager;
+import net.kenji.advanced_ai_villagers.api.manager.SpeechManager;
 import net.kenji.advanced_ai_villagers.api.context.ContextManager;
 import net.kenji.advanced_ai_villagers.api.model.VillagerAiModel;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.npc.Villager;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
-import java.util.Optional;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = AdvancedAiVillagers.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class TickEvents {
-
-
-    @SubscribeEvent
-    public static void onVillagerTick(LivingEvent.LivingTickEvent event) {
-        if (!(event.getEntity() instanceof Villager villager)) return;
-
-        manageVillagerSpeechBubble(villager);
-        manageVillagerToVillagerSpeaking(villager);
-    }
-
-    public static void manageVillagerToVillagerSpeaking(Villager villager){
-        Optional<LivingEntity> target = villager.getBrain().getMemory(MemoryModuleType.INTERACTION_TARGET);
-        int counter = SpeechManager.speechCounterMap.getOrDefault(villager.getUUID(), 0);
-        if(counter <= 0) {
-            SpeechManager.speechCounterMap.put(villager.getUUID(), SpeechManager.VILLAGER_TALK_COUNTER_MAX);
-            return;
-        }
-        else SpeechManager.speechCounterMap.put(villager.getUUID(), counter - 1);
-
-
-        boolean isTalkingToVillager =
-                target.isPresent() && target.get() instanceof Villager villagerTarget;
-
-
-        if (isTalkingToVillager) {
-            float randomChance = villager.getRandom().nextFloat();
-
-            Villager villagerTarget = (Villager) target.get(); // safe after instanceof check above
-            Pair<UUID, UUID> pairKey = normalisedPair(villager.getUUID(), villagerTarget.getUUID());
-            double dist = villager.position().distanceTo(villagerTarget.position());
-
-            if(dist > SpeechManager.VILLAGER_TALK_DIST_MAX) return;
-
-
-            if (!villager.getPersistentData().getString(SpeechManager.SPEECH_BUBBLE_TAG).isEmpty()) return;
-
-
-            if (SpeechManager.activeConversations.containsKey(pairKey))return;
-            if (randomChance > SpeechManager.VILLAGER_TALK_CHANCE) return;
-
-            startVillagerConversation(villager, villagerTarget);
-        }
-    }
-    private static void startVillagerConversation(Villager speaker, Villager listener) {
+public class VillagerConversationHandler {
+    public static void startVillagerConversation(Villager speaker, Villager listener) {
         Pair<UUID, UUID> pairKey = normalisedPair(speaker.getUUID(), listener.getUUID());
         if (SpeechManager.activeConversations.containsKey(pairKey)) return;
+        if (SpeechManager.activeConversations.size() >= SpeechManager.THREAD_MAX_COUNT) return; // <-- add this
 
         SpeechManager.VillagerConversation conv = new SpeechManager.VillagerConversation(
                 speaker.getUUID(), listener.getUUID(), 6
@@ -85,7 +35,7 @@ public class TickEvents {
                 conv.lastMessage = opening;
                 conv.nextSpeaker = v2.getUUID(); // v2 replies next
                 postSpeech(v1, opening);
-                sleepOrAbort(conv, SpeechManager.SPEECH_DECAY_TIME / 50L);
+                sleepOrAbort(conv, SpeechManager.SPEECH_DECAY_TIME * 50L);
 
                 while (conv.active && conv.turnsRemaining > 0 && !Thread.currentThread().isInterrupted()) {
 
@@ -129,7 +79,7 @@ public class TickEvents {
         thread.setDaemon(true);
         conv.thread = thread;
         SpeechManager.activeConversations.put(pairKey, conv);
-        thread.start();
+        SpeechManager.aiThreadPool.execute(thread);
     }
 
     // Post speech back onto the server thread safely
@@ -160,40 +110,8 @@ public class TickEvents {
     }
 
     // Normalised pair so (A,B) and (B,A) map to the same key
-    private static Pair<UUID, UUID> normalisedPair(UUID a, UUID b) {
+    public static Pair<UUID, UUID> normalisedPair(UUID a, UUID b) {
         return a.compareTo(b) < 0 ? new Pair<>(a, b) : new Pair<>(b, a);
     }
 
-
-    public static boolean isVillagerConversationValid(UUID uuid1, UUID uuid2){
-        return SpeechManager.threadTrackMap.get(new Pair<>(uuid1, uuid2)) != null;
-    }
-
-    public static void manageVillagerSpeechBubble(Villager villager){
-        String tagText = villager.getPersistentData().getString(SpeechManager.SPEECH_BUBBLE_TAG);
-        if (tagText.isEmpty()) return;
-
-        if(!tagText.equals(SpeechManager.speechTrackMap.getOrDefault(villager.getUUID(), ""))){
-            SpeechManager.speechTrackMap.put(villager.getUUID(), tagText);
-            SpeechManager.speechCountMap.put(villager.getUUID(), SpeechManager.SPEECH_DECAY_TIME);
-        }
-
-
-        int villagerDecayCounter = SpeechManager.speechCountMap.getOrDefault(villager.getUUID(), -1);
-        if (villagerDecayCounter == -1) {
-            SpeechManager.speechCountMap.put(villager.getUUID(), SpeechManager.SPEECH_DECAY_TIME);
-        } else if (villagerDecayCounter > 0) {
-            SpeechManager.speechCountMap.put(villager.getUUID(), villagerDecayCounter - 1);
-        } else {
-            villager.level().players().forEach(player -> {
-                SpeechManager.addVillagerSpeech(villager, player, "");
-                Thread villagerAiThreadSpeechManager = SpeechManager.threadTrackMap.get(villager.getUUID());
-                if(villagerAiThreadSpeechManager != null) {
-                    villagerAiThreadSpeechManager.interrupt();
-                }
-            });
-            SpeechManager.speechCountMap.remove(villager.getUUID());
-        }
-
-    }
 }

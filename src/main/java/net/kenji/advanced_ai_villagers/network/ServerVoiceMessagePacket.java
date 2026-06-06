@@ -1,13 +1,10 @@
 package net.kenji.advanced_ai_villagers.network;
 
-import net.kenji.advanced_ai_villagers.api.SpeechManager;
+import net.kenji.advanced_ai_villagers.api.manager.SpeechManager;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraftforge.network.NetworkEvent;
-import java.util.UUID;
+
 import java.util.function.Supplier;
 
 public class ServerVoiceMessagePacket {

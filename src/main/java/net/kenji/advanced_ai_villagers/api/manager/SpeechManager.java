@@ -1,4 +1,4 @@
-package net.kenji.advanced_ai_villagers.api;
+package net.kenji.advanced_ai_villagers.api.manager;
 
 import com.mojang.datafixers.util.Pair;
 import net.kenji.advanced_ai_villagers.api.context.ContextManager;
@@ -12,9 +12,16 @@ import net.minecraft.world.phys.Vec3;
 import org.jline.utils.Log;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SpeechManager {
-    public static final Map<Pair<UUID, UUID>, Thread> threadTrackMap = new HashMap<>();
+
+    public static final ExecutorService aiThreadPool = Executors.newFixedThreadPool(4, r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        return t;
+    });
 
 
     public static final Map<UUID, String> speechTrackMap = new HashMap<>();
@@ -63,17 +70,17 @@ public class SpeechManager {
         villager.getPersistentData().putString(SpeechManager.SPEECH_BUBBLE_TAG, text);
     }
 
-    public static void sendSpeechMessage(ServerPlayer player, String message, boolean useLookAngle){
-        Villager nearest = findNearestVillager(player, 10); // within 10 blocks
-        if(useLookAngle)
-            findLookAtVillager(player, 10);
+    public static void sendSpeechMessage(ServerPlayer player, String message, boolean useLookAngle) {
+        Villager nearest = useLookAngle
+                ? findLookAtVillager(player, 10)
+                : findNearestVillager(player, 10);
 
-        List<Villager> villagerGroup = findVillagerGroup(player, 5, 2.5F, nearest);
+        if (nearest == null) return; // no villager targeted, ignore
 
-        if (nearest == null && villagerGroup.isEmpty()) return; // no villager nearby, ignore
+        List<Villager> villagerGroup = findVillagerGroup(player, 10, 2.5F, nearest);
 
-        Thread aiThread = new Thread(() -> {
-            villagerGroup.forEach((villager) ->{
+        SpeechManager.aiThreadPool.submit(() -> {
+            villagerGroup.forEach((villager) -> {
                 String context = ContextManager.getPlayerChatContext(villager, player);
 
                 String response = VillagerAiModel.generateResponse(message, context, VillagerAiModel.TEMPERATURE_CHAT, 25, villager.getUUID());
@@ -91,8 +98,6 @@ public class SpeechManager {
                 }
             });
         });
-        aiThread.setDaemon(true);
-        aiThread.start();
     }
 
     private static List<Villager> findVillagerGroup(ServerPlayer player, double range,double nearbyRange, Villager villagerToIgnore) {

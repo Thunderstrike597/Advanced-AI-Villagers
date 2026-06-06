@@ -1,7 +1,7 @@
 package net.kenji.advanced_ai_villagers.client.screen;
 
-import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
-import net.kenji.advanced_ai_villagers.api.SpeechManager;
+import net.kenji.advanced_ai_villagers.AiTalkingVillagers;
+import net.kenji.advanced_ai_villagers.api.manager.SpeechManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
@@ -12,7 +12,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = AdvancedAiVillagers.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = AiTalkingVillagers.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class AudioCaptionsManager {
 
 

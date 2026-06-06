@@ -1,6 +1,6 @@
 package net.kenji.advanced_ai_villagers.network;
 
-import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
+import net.kenji.advanced_ai_villagers.AiTalkingVillagers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -12,7 +12,7 @@ public class ModPacketHandler {
     private static final String PROTOCOL_VERSION = "1";
 
     public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(AdvancedAiVillagers.MODID, "main"),
+            new ResourceLocation(AiTalkingVillagers.MODID, "main"),
             () -> PROTOCOL_VERSION,
             PROTOCOL_VERSION::equals,
             PROTOCOL_VERSION::equals

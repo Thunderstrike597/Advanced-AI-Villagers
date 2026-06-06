@@ -6,13 +6,14 @@ import de.maxhenkel.voicechat.api.VoicechatPlugin;
 import de.maxhenkel.voicechat.api.events.ClientSoundEvent;
 import de.maxhenkel.voicechat.api.events.EventRegistration;
 
-import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
-import net.kenji.advanced_ai_villagers.api.SpeechManager;
-import net.kenji.advanced_ai_villagers.api.speech_management.VoiceToTextHandler;
+import io.github.mightguy.spellcheck.symspell.exception.SpellCheckException;
+import net.kenji.advanced_ai_villagers.AiTalkingVillagers;
+import net.kenji.advanced_ai_villagers.api.manager.SpeechManager;
 import net.kenji.advanced_ai_villagers.network.ModPacketHandler;
 import net.kenji.advanced_ai_villagers.network.ServerVoiceMessagePacket;
+import net.kenji.ai_voice_lib.api.speech_management.VoiceToTextHandler;
+import net.kenji.ai_voice_lib.api.utils.SpellCorrectionUtils;
 import net.minecraft.client.Minecraft;
-import org.jline.utils.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,10 +31,12 @@ public class VoiceToChatPlugin implements VoicechatPlugin {
     private volatile boolean flushScheduled = false;
 
     @Override
-    public String getPluginId() { return AdvancedAiVillagers.MODID; }
+    public String getPluginId() { return AiTalkingVillagers.MODID; }
 
     @Override
-    public void initialize(VoicechatApi api) { handler.init(); }
+    public void initialize(VoicechatApi api) {
+        handler.init();
+    }
 
     @Override
     public void registerEvents(EventRegistration registration) {
@@ -81,13 +84,19 @@ public class VoiceToChatPlugin implements VoicechatPlugin {
         if(fullAudio.length < 16000) return;
         Thread t = new Thread(() -> {
             String text = handler.transcribe(fullAudio);
-            Log.info("Transcribed Audio: " + text);
+            //Log.info("Transcribed Audio: " + text);
             if (text != null && !text.isBlank()) {
-                Log.info("✅ Speech recognized: " + text);
+                //Log.info("✅ Speech recognized: " + text);
                 Minecraft.getInstance().execute(() -> {
                     if (Minecraft.getInstance().player != null) {
-                        ModPacketHandler.sendToServer(new ServerVoiceMessagePacket(text));
-                        Minecraft.getInstance().player.getPersistentData().putString(SpeechManager.PLAYER_SPEECH_TAG, text);
+                        try {
+                            String corrected = SpellCorrectionUtils.getCorrectionText(text);
+                            ModPacketHandler.sendToServer(new ServerVoiceMessagePacket(corrected));
+                            Minecraft.getInstance().player.getPersistentData().putString(SpeechManager.PLAYER_SPEECH_TAG, corrected);
+                        } catch (SpellCheckException e) {
+                            throw new RuntimeException(e);
+                        }
+
                     }
                 });
             }

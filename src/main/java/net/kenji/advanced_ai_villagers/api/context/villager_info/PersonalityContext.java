@@ -1,6 +1,6 @@
 package net.kenji.advanced_ai_villagers.api.context.villager_info;
 
-import net.kenji.advanced_ai_villagers.api.SpeechManager;
+import net.kenji.advanced_ai_villagers.api.manager.SpeechManager;
 import net.kenji.advanced_ai_villagers.api.interfaces.IContext;
 import net.minecraft.world.entity.npc.Villager;
 import org.jline.utils.Log;

@@ -1,7 +1,6 @@
 package net.kenji.advanced_ai_villagers.network;
 
-import net.kenji.advanced_ai_villagers.api.SpeechManager;
-import net.kenji.advanced_ai_villagers.client.render.TextBubbleRenderer;
+import net.kenji.advanced_ai_villagers.api.manager.SpeechManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;

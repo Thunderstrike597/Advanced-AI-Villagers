@@ -1,35 +1,27 @@
-package net.kenji.advanced_ai_villagers.api;
+package net.kenji.advanced_ai_villagers.api.manager;
 
-import com.sun.jna.Memory;
-import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
-import net.kenji.advanced_ai_villagers.api.context.villager_info.PersonalityContext;
+import net.kenji.advanced_ai_villagers.AiTalkingVillagers;
 import net.kenji.advanced_ai_villagers.api.context.villager_info.RecentEventContext;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.raid.Raid;
 import net.minecraft.world.entity.raid.Raider;
-import net.minecraft.world.entity.raid.Raids;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.*;
 
-@Mod.EventBusSubscriber(modid = AdvancedAiVillagers.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class RecentEventManager {
+public class RecentEventHandler {
     public static Map<UUID, Integer> recentEventTickCount = new HashMap<>();
     public static int MAX_RECENT_EVENT_TIME = 24000 * 7;
 
-    @SubscribeEvent
-    public static void onVillagerDeath(LivingDeathEvent event) {
-        if (!(event.getEntity() instanceof Villager villager))
-            return;
+
+    public static void tick(Villager villager){
+        assignRaidSurvivedRecentEvent(villager);
+        manageRecentEventMemoryCount(villager);
+    }
+
+    public static void assignVillagerDeathRecentEvent(Villager villager){
         List<Villager> nearbyVillagers = findNearbyVillagers(villager, 80, 40);
 
         for (Villager nearby : nearbyVillagers) {
@@ -37,47 +29,27 @@ public class RecentEventManager {
                 nearby.getPersistentData().putString(SpeechManager.RECENT_EVENT_TAG, RecentEventContext.VILLAGER_DEATH.getTagName());
         }
     }
-    @SubscribeEvent
-    public static void onRaidMobDeath(LivingDeathEvent event) {
-        // We only care about the server side
-        if (event.getEntity().level().isClientSide()) {
-            return;
-        }
 
-        ServerLevel serverLevel = (ServerLevel) event.getEntity().level();
+    public static void assignRaidSurvivedRecentEvent(Villager entity) {
+        if (!(entity.level() instanceof ServerLevel serverLevel)) return;
 
-        // Ensure the entity killed is part of a raid
-        if (event.getEntity().getTags().contains("Raider") || event.getEntity() instanceof Raider) {
+        Raid raid = serverLevel.getRaidAt(entity.blockPosition());
 
-            // Get the raid at the entity's position
-            Raid raid = serverLevel.getRaidAt(event.getEntity().blockPosition());
-
-            if (raid != null) {
-                // Check if the raid is officially over
-                if (raid.isStopped()) {
-                    if (raid.isOver()) {
-                        Villager villager = findNearestVillager(event.getEntity(), 40);
-
-                        List<Villager> nearbyVillagers = findNearbyVillagers(villager, 80, 40);
-                        if(!nearbyVillagers.contains(villager))
-                            nearbyVillagers.add(villager);
-                        for (Villager nearby : nearbyVillagers) {
-                            nearby.getPersistentData().putString(SpeechManager.RECENT_EVENT_TAG, RecentEventContext.RAID_SURVIVED.getTagName());
-                        }
-                    }
+        if (raid != null) {
+            if (raid.isOver()) {
+                Villager villager = findNearestVillager(entity, 40);
+                List<Villager> nearbyVillagers = findNearbyVillagers(villager, 80, 40);
+                if (!nearbyVillagers.contains(villager))
+                    nearbyVillagers.add(villager);
+                for (Villager nearby : nearbyVillagers) {
+                    nearby.getPersistentData().putString(SpeechManager.RECENT_EVENT_TAG, RecentEventContext.RAID_SURVIVED.getTagName());
                 }
             }
         }
     }
-    @SubscribeEvent
-    public static void onVillagerTick(LivingEvent.LivingTickEvent event) {
-        if (!(event.getEntity() instanceof Villager villager)) return;
-
-        manageVillagerDeathCount(villager);
-    }
 
 
-    private static void manageVillagerDeathCount(Villager villager) {
+    public static void manageRecentEventMemoryCount(Villager villager) {
         for (RecentEventContext context : RecentEventContext.values()) {
             if (!villager.getPersistentData().getString(SpeechManager.RECENT_EVENT_TAG).equals(context.getTagName()))
                 continue;

@@ -1,23 +1,27 @@
 package net.kenji.advanced_ai_villagers.api.model;
 
 import ai.onnxruntime.*;
-import com.mojang.datafixers.util.Pair;
-import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
+import io.github.mightguy.spellcheck.symspell.api.DataHolder;
+import io.github.mightguy.spellcheck.symspell.api.StringDistance;
+import io.github.mightguy.spellcheck.symspell.common.SpellCheckSettings;
+import net.kenji.advanced_ai_villagers.AiTalkingVillagers;
+
+import net.kenji.advanced_ai_villagers.ConfigCommon;
+import net.kenji.ai_voice_lib.api.OrtSessionEnvironment;
+import net.kenji.ai_voice_lib.api.utils.OnnxLoadingUtils;
+import net.kenji.ai_voice_lib.api.utils.SpellCorrectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jline.utils.Log;
 
-import java.io.InputStream;
 import java.nio.file.*;
 import java.util.*;
 
-public class VillagerAiModel {
+public class VillagerAiModel extends io.github.mightguy.spellcheck.symspell.impl.SymSpellCheck{
 
     private static final Logger LOGGER = LogManager.getLogger("VillagerAI");
-    private static OrtEnvironment env;
-    private static OrtSession session;
+    private static OrtSessionEnvironment ortSessionEnvironment;
     private static boolean loaded = false;
-    private static VillagerTokenizer tokenizer = new VillagerTokenizer();
 
     public static final float TEMPERATURE_PRESET = 0.42F;
     public static final float TEMPERATURE_CHAT = 0.575F;
@@ -30,9 +34,22 @@ public class VillagerAiModel {
     private static final boolean USE_CONVERSATION_HISTORY = true;
     private static final Map<UUID, List<String[]>> conversationHistory = new HashMap<>();
     private static final int MAX_HISTORY_TURNS = 3;
+    private static String MODEL_NAME = "model";
 
+    private static String[] modelFilesSearchNames = {
+            MODEL_NAME + ".onnx",
+            MODEL_NAME + ".onnx.data",
+            "merges.txt",
+            "tokenizer.json",
+            "vocab.json",
+            "special_tokens_map.json",
+    };
     // Separate history map for villager-to-villager exchanges
     private static final Map<UUID, List<String[]>> villagerConversationHistory = new HashMap<>();
+
+    public VillagerAiModel(DataHolder dataHolder, StringDistance stringDistance, SpellCheckSettings spellCheckSettings) {
+        super(dataHolder, stringDistance, spellCheckSettings);
+    }
 
     // Call this once when the mod starts up
     public static void load() {
@@ -41,44 +58,17 @@ public class VillagerAiModel {
 
             LOGGER.info("Loading Villager AI model...");
 
-            env = OrtEnvironment.getEnvironment();
-
-            // Extract both model files to a temp directory on disk
-            // ONNX Runtime needs them as actual files, not streams
-            Path tempDir = Files.createTempDirectory("villagerai");
-
-            String[] modelFiles = {
-                    "model.onnx",
-                    "model.onnx.data"
-            };
-
-            for (String fileName : modelFiles) {
-                InputStream stream = VillagerAiModel.class
-                        .getResourceAsStream("/assets/" + AdvancedAiVillagers.MODID + "/model/" + fileName);
-
-                if (stream == null) {
-                    LOGGER.error("Could not find " + fileName + " in resources!");
-                    return;
-                }
-
-                Path outPath = tempDir.resolve(fileName);
-                Files.copy(stream, outPath, StandardCopyOption.REPLACE_EXISTING);
-                LOGGER.info("Extracted " + fileName + " to " + outPath);
+            String modelDir = "/assets/" + AiTalkingVillagers.MODID + "/model/" + ConfigCommon.MODEL_TYPE.get().getModelName() + "/";
+            Path outputDir = Paths.get(
+                    "ai_models/" + AiTalkingVillagers.MODID + "/model/" + ConfigCommon.MODEL_TYPE.get().getModelName() + "/"
+            );
+            ortSessionEnvironment = OnnxLoadingUtils.startOrtEnvSession(AiTalkingVillagers.class, modelDir, outputDir, MODEL_NAME, modelFilesSearchNames, true);
+            if (ortSessionEnvironment != null) {
+                loaded = true; // <-- add this
+                LOGGER.info("Villager AI model loaded successfully!");
+            } else {
+                LOGGER.error("Failed to load Villager AI model: startOrtEnvSession returned null");
             }
-
-            // Now load from the temp directory where both files exist together
-            Path modelPath = tempDir.resolve("model.onnx");
-
-            OrtSession.SessionOptions opts = new OrtSession.SessionOptions();
-            session = env.createSession(modelPath.toString(), opts);
-
-            loaded = true;
-            if (!tokenizer.load()) {
-                LOGGER.error("Tokenizer failed to load!");
-                loaded = false;
-            }
-
-            LOGGER.info("Villager AI model loaded successfully!");
         } catch (Exception e) {
             LOGGER.error("Failed to load Villager AI model: " + e.getMessage());
             e.printStackTrace();
@@ -112,18 +102,18 @@ public class VillagerAiModel {
             }
 
             LOGGER.info("Full prompt: " + prompt);
-            long[] tokenIds = tokenizer.encode(prompt);
+            long[] tokenIds = ortSessionEnvironment.tokenizer().encode(prompt);
             int promptLength = tokenIds.length;
 
             for (int i = 0; i < maxTokens; i++) {
                 long[][] inputArray = new long[1][tokenIds.length];
                 inputArray[0] = tokenIds;
 
-                OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputArray);
+                OnnxTensor inputTensor = OnnxTensor.createTensor(ortSessionEnvironment.env(), inputArray);
                 Map<String, OnnxTensor> inputs = new HashMap<>();
                 inputs.put("input_ids", inputTensor);
 
-                OrtSession.Result result = session.run(inputs);
+                OrtSession.Result result = ortSessionEnvironment.session().run(inputs);
                 float[][][] logits = (float[][][]) result.get(0).getValue();
 
                 float[] lastLogits = logits[0][tokenIds.length - 1];
@@ -140,7 +130,7 @@ public class VillagerAiModel {
                 result.close();
             }
 
-            String response = tokenizer.decode(Arrays.copyOfRange(tokenIds, promptLength, tokenIds.length)).trim();
+            String response = ortSessionEnvironment.tokenizer().decode(Arrays.copyOfRange(tokenIds, promptLength, tokenIds.length)).trim();
 
             // Strip the endoftext token if present
             response = response.replace("<|endoftext|>", "").trim();
@@ -177,11 +167,15 @@ public class VillagerAiModel {
                 }
             }
             recent.add(response);
+
             if (recent.size() > RECENT_RESPONSE_LIMIT) recent.remove(0);
             recentResponses.put(villagerUUID, recent);
+            Log.info("Logging Response: " + response);
+            String corrected = SpellCorrectionUtils.getCorrectionText(response);
+            Log.info("Logging Corrected: " + corrected);
 
-            saveResponse(villagerUUID, playerMessage, response);
-            return response;
+            saveResponse(villagerUUID, playerMessage, corrected);
+            return corrected;
         } catch (Exception e) {
             LOGGER.error("Generation failed: " + e.getMessage());
             return "";
@@ -195,19 +189,19 @@ public class VillagerAiModel {
             // Use a special prompt that signals the villager speaks first
             String prompt = "<|context|> " + context + " <|villager|>";
 
-            Log.info("Generating villager greeting with prompt: " + prompt);
-            long[] tokenIds = tokenizer.encode(prompt);
+           // Log.info("Generating villager greeting with prompt: " + prompt);
+            long[] tokenIds = ortSessionEnvironment.tokenizer().encode(prompt);
             int promptLength = tokenIds.length;
 
             for (int i = 0; i < maxTokens; i++) {
                 long[][] inputArray = new long[1][tokenIds.length];
                 inputArray[0] = tokenIds;
 
-                OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputArray);
+                OnnxTensor inputTensor = OnnxTensor.createTensor(ortSessionEnvironment.env(), inputArray);
                 Map<String, OnnxTensor> inputs = new HashMap<>();
                 inputs.put("input_ids", inputTensor);
 
-                OrtSession.Result result = session.run(inputs);
+                OrtSession.Result result = ortSessionEnvironment.session().run(inputs);
                 float[][][] logits = (float[][][]) result.get(0).getValue();
 
                 float[] lastLogits = logits[0][tokenIds.length - 1];
@@ -224,7 +218,7 @@ public class VillagerAiModel {
                 result.close();
             }
 
-            String response = tokenizer.decode(Arrays.copyOfRange(tokenIds, promptLength, tokenIds.length)).trim();
+            String response = ortSessionEnvironment.tokenizer().decode(Arrays.copyOfRange(tokenIds, promptLength, tokenIds.length)).trim();
             response = response.replace("<|endoftext|>", "").trim();
             if (response.contains("<|")) {
                 response = response.substring(0, response.indexOf("<|")).trim();
@@ -270,18 +264,18 @@ public class VillagerAiModel {
             String prompt = promptBuilder.toString();
             LOGGER.info("Villager-to-villager prompt: " + prompt);
 
-            long[] tokenIds = tokenizer.encode(prompt);
+            long[] tokenIds = ortSessionEnvironment.tokenizer().encode(prompt);
             int promptLength = tokenIds.length;
 
             for (int i = 0; i < maxTokens; i++) {
                 long[][] inputArray = new long[1][tokenIds.length];
                 inputArray[0] = tokenIds;
 
-                OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputArray);
+                OnnxTensor inputTensor = OnnxTensor.createTensor(ortSessionEnvironment.env(), inputArray);
                 Map<String, OnnxTensor> inputs = new HashMap<>();
                 inputs.put("input_ids", inputTensor);
 
-                OrtSession.Result result = session.run(inputs);
+                OrtSession.Result result = ortSessionEnvironment.session().run(inputs);
                 float[][][] logits = (float[][][]) result.get(0).getValue();
 
                 float[] lastLogits = logits[0][tokenIds.length - 1];
@@ -297,7 +291,7 @@ public class VillagerAiModel {
                 result.close();
             }
 
-            String response = tokenizer.decode(Arrays.copyOfRange(tokenIds, promptLength, tokenIds.length)).trim();
+            String response = ortSessionEnvironment.tokenizer().decode(Arrays.copyOfRange(tokenIds, promptLength, tokenIds.length)).trim();
             response = response.replace("<|endoftext|>", "").trim();
             if (response.contains("<|")) {
                 response = response.substring(0, response.indexOf("<|")).trim();

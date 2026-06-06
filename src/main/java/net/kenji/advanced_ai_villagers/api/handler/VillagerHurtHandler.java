@@ -1,30 +1,25 @@
-package net.kenji.advanced_ai_villagers.events;
+package net.kenji.advanced_ai_villagers.api.handler;
 
-import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
-import net.kenji.advanced_ai_villagers.api.SpeechManager;
+import net.kenji.advanced_ai_villagers.api.manager.SpeechManager;
 import net.kenji.advanced_ai_villagers.api.context.ContextManager;
 import net.kenji.advanced_ai_villagers.api.model.VillagerAiModel;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import org.jline.utils.Log;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = AdvancedAiVillagers.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class VillagerCombatEvents {
+public class VillagerHurtHandler {
 
     // Cooldown so the villager doesn't spam every single hit
     private static final Map<UUID, Long> lastSpokenTime = new HashMap<>();
     private static final long COOLDOWN_MS = 4000; // 4 seconds between messages
 
-    @SubscribeEvent
-    public static void onVillagerAttacked(LivingAttackEvent event) {
 
+    public static void managerVillagerAttacked(LivingAttackEvent event){
         // Check if the thing being attacked is a villager
         if (!(event.getEntity() instanceof Villager villager)) return;
 
@@ -42,7 +37,7 @@ public class VillagerCombatEvents {
         // Build the situation string — this is what gets passed to the model
 
         // Run inference off the main thread so it doesn't freeze the game
-        Thread aiThread = new Thread(() -> {
+        SpeechManager.aiThreadPool.execute(() -> {
             Log.info("Model loaded state: " + VillagerAiModel.isLoaded());
             String context = ContextManager.getVillagerCombatContext(villager);
             String response = VillagerAiModel.generateResponse(buildSituation(villager), context, VillagerAiModel.TEMPERATURE_PRESET, 15, villagerID);
@@ -54,16 +49,15 @@ public class VillagerCombatEvents {
                     // Displays as chat message for now
                     // We'll replace this with a speech bubble later
                     villager.level().players().forEach(player ->{
-                        SpeechManager.addVillagerSpeech(villager, player, response);
+                                SpeechManager.addVillagerSpeech(villager, player, response);
 
-                        }
+                            }
                     );
                 });
             }
         });
-        aiThread.setDaemon(true);
-        aiThread.start();
     }
+
 
     private static String buildSituation(Villager villager) {
         float health = villager.getHealth();

@@ -2,8 +2,8 @@ package net.kenji.advanced_ai_villagers.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.kenji.advanced_ai_villagers.AdvancedAiVillagers;
-import net.kenji.advanced_ai_villagers.api.SpeechManager;
+import net.kenji.advanced_ai_villagers.AiTalkingVillagers;
+import net.kenji.advanced_ai_villagers.api.manager.SpeechManager;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -28,13 +28,13 @@ import org.joml.Matrix4f;
 import java.util.List;
 
 
-@Mod.EventBusSubscriber(modid = AdvancedAiVillagers.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = AiTalkingVillagers.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class TextBubbleRenderer {
 
 
     private static final double BUBBLE_RENDER_RANGE = 12;
     private static final ResourceLocation SPEECH_BUBBLE_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(AdvancedAiVillagers.MODID, "textures/gui/speech_bubble.png");
+            ResourceLocation.fromNamespaceAndPath(AiTalkingVillagers.MODID, "textures/gui/speech_bubble.png");
 
     private static final float TEXT_BUBBLE_SCALE = 0.0145f;
     private static final double TEXT_BUBBLE_OFFSET_X = -0.675;
