@@ -12,8 +12,8 @@ import net.kenji.ai_talking_villagers.ConfigClient;
 import net.kenji.ai_talking_villagers.api.manager.SpeechManager;
 import net.kenji.ai_talking_villagers.network.ModPacketHandler;
 import net.kenji.ai_talking_villagers.network.ServerVoiceMessagePacket;
-import net.kenji.ai_voice_lib.api.speech_management.VoiceToTextHandler;
-import net.kenji.ai_voice_lib.api.utils.SpellCorrectionUtils;
+import net.kenji.onnx_hf_core.api.speech_management.VoiceToTextHandler;
+import net.kenji.onnx_hf_core.api.utils.SpellCorrectionUtils;
 import net.minecraft.client.Minecraft;
 
 import java.util.ArrayList;

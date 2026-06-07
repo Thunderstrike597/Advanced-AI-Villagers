@@ -7,9 +7,9 @@ import io.github.mightguy.spellcheck.symspell.common.SpellCheckSettings;
 import net.kenji.ai_talking_villagers.AiTalkingVillagers;
 
 import net.kenji.ai_talking_villagers.ConfigCommon;
-import net.kenji.ai_voice_lib.api.OrtSessionEnvironment;
-import net.kenji.ai_voice_lib.api.utils.OnnxLoadingUtils;
-import net.kenji.ai_voice_lib.api.utils.SpellCorrectionUtils;
+import net.kenji.onnx_hf_core.api.OrtSessionEnvironment;
+import net.kenji.onnx_hf_core.api.utils.OnnxLoadingUtils;
+import net.kenji.onnx_hf_core.api.utils.SpellCorrectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jline.utils.Log;
