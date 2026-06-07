@@ -9,6 +9,8 @@ public class ConfigCommon {
 
     public static ForgeConfigSpec.ConfigValue<ModelType> MODEL_TYPE;
 
+    public static ForgeConfigSpec.ConfigValue<Boolean> USE_MEMORY;
+
     public static ForgeConfigSpec.ConfigValue<Double> MODEL_TEMPERATURE_CHAT;
     public static ForgeConfigSpec.ConfigValue<Double> MODEL_TEMPERATURE_OTHER;
     public static ForgeConfigSpec.ConfigValue<Double> MODEL_REPETITION_PENALTY;
@@ -19,6 +21,10 @@ public class ConfigCommon {
         MODEL_TYPE = BUILDER
                 .comment("The ONNX model type used by villagers")
                 .defineEnum("Model Types", ModelType.GPT_NEO_125M);
+
+        USE_MEMORY = BUILDER
+                .comment("Whether or not the Villager Ai uses short-term memory for previous messages. (If the responses seem nonsensical, turning this off could help.. If it does help, please let me know on the github page so I can adjust this!)")
+                .define("Use Villager Memory", true);
 
         MODEL_TEMPERATURE_CHAT = BUILDER
                 .comment("This defines the model temperature for chat situations. In Short, model temperature defines how 'creative' the model is in it's responses.. If too low, the response will be extremely boring and similar, to other responses. If too high it will start rambling nonsense and not make sense. For chatting I decided '0.575' is a good value. Max is 1000 (ONLY if you want to have fun with it lol, I'd suggest between 0.0 - 1.0)")
