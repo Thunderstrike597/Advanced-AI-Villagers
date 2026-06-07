@@ -82,12 +82,11 @@ public class VoiceToChatPlugin implements VoicechatPlugin {
 
         short[] fullAudio = flattenAudio(audioBuffer);
         audioBuffer.clear();
-        if(fullAudio.length < 16000) return;
-        Thread t = new Thread(() -> {
+        if (fullAudio.length < 16000) return;
+
+        SpeechManager.playerChatThreadPool.submit(() -> {
             String text = handler.transcribe(fullAudio);
-            //Log.info("Transcribed Audio: " + text);
             if (text != null && !text.isBlank()) {
-                //Log.info("✅ Speech recognized: " + text);
                 Minecraft.getInstance().execute(() -> {
                     if (Minecraft.getInstance().player != null) {
                         try {
@@ -97,13 +96,10 @@ public class VoiceToChatPlugin implements VoicechatPlugin {
                         } catch (SpellCheckException e) {
                             throw new RuntimeException(e);
                         }
-
                     }
                 });
             }
         });
-        t.setDaemon(true);
-        t.start();
     }
 
     private short[] flattenAudio(List<short[]> frames) {

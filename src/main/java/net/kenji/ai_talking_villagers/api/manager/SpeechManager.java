@@ -18,9 +18,19 @@ import java.util.concurrent.Executors;
 
 public class SpeechManager {
 
+    // In SpeechManager — dedicated pool just for player chat (fast, needs to be responsive)
+    public static final ExecutorService playerChatThreadPool = Executors.newFixedThreadPool(2, r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        t.setName("player-chat-ai");
+        return t;
+    });
+
+    // Keep aiThreadPool for villager conversations
     public static final ExecutorService aiThreadPool = Executors.newFixedThreadPool(4, r -> {
         Thread t = new Thread(r);
         t.setDaemon(true);
+        t.setName("villager-conv-ai");
         return t;
     });
 
@@ -76,28 +86,32 @@ public class SpeechManager {
                 ? findLookAtVillager(player, 10)
                 : findNearestVillager(player, 10);
 
-        if (nearest == null) return; // no villager targeted, ignore
-
+        if (nearest == null) {
+            Log.warn("sendSpeechMessage: no villager found, aborting");
+            return;
+        }
         List<Villager> villagerGroup = findVillagerGroup(player, 10, 2.5F, nearest);
-
-        SpeechManager.aiThreadPool.submit(() -> {
-            villagerGroup.forEach((villager) -> {
-                String context = ContextManager.getPlayerChatContext(villager, player);
-
-                String response = VillagerAiModel.generateResponse(message, context, ConfigCommon.MODEL_TEMPERATURE_CHAT.get(), 25, villager.getUUID());
-                Log.info("Response: " + response);
-                // Replace name placeholder
-                response = response.replace("VILLAGER_NAME", villager.getName().getString());
-                response = response.replace("VILLAGERNAME", villager.getName().getString());
-                response = response.replace("VILLAGER NAME", villager.getName().getString());
-
-                if (!response.isEmpty()) {
-                    String finalResponse = response;
-                    villager.getServer().execute(() -> {
-                        SpeechManager.addVillagerSpeech(villager, player, finalResponse);
-                    });
-                }
-            });
+        SpeechManager.playerChatThreadPool.submit(() -> {
+            try {
+                villagerGroup.forEach((villager) -> {
+                    //Log.info("Logging Villager Speech!");
+                    String context = ContextManager.getPlayerChatContext(villager, player);
+                    String response = VillagerAiModel.generateResponse(message, context, ConfigCommon.MODEL_TEMPERATURE_CHAT.get(), 25, villager.getUUID());
+                    //Log.info("Response: " + response);
+                    response = response.replace("VILLAGER_NAME", villager.getName().getString());
+                    response = response.replace("VILLAGERNAME", villager.getName().getString());
+                    response = response.replace("VILLAGER NAME", villager.getName().getString());
+                    if (!response.isEmpty()) {
+                        String finalResponse = response;
+                        villager.getServer().execute(() -> {
+                            SpeechManager.addVillagerSpeech(villager, player, finalResponse);
+                        });
+                    }
+                });
+            } catch (Throwable t) {
+                Log.error("aiThreadPool lambda crashed: ", t);
+                t.printStackTrace();
+            }
         });
     }
 

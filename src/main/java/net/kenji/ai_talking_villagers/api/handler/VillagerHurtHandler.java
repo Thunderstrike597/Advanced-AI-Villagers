@@ -42,7 +42,7 @@ public class VillagerHurtHandler {
             Log.info("Model loaded state: " + VillagerAiModel.isLoaded());
             String context = ContextManager.getVillagerCombatContext(villager);
             String response = VillagerAiModel.generateResponse(buildSituation(villager), context, ConfigCommon.MODEL_TEMPERATURE_OTHER.get(), 15, villagerID);
-            Log.info("Logging Villager Hurt Response: " + response);
+            //Log.info("Logging Villager Hurt Response: " + response);
 
             if (!response.isEmpty()) {
                 // Send back to main thread to display

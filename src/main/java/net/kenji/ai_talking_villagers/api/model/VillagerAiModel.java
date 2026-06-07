@@ -169,10 +169,9 @@ public class VillagerAiModel extends io.github.mightguy.spellcheck.symspell.impl
 
             if (recent.size() > RECENT_RESPONSE_LIMIT) recent.remove(0);
             recentResponses.put(villagerUUID, recent);
-            Log.info("Logging Response: " + response);
+            //Log.info("Logging Response: " + response);
             String corrected = SpellCorrectionUtils.getCorrectionText(response);
-            Log.info("Logging Corrected: " + corrected);
-
+            //Log.info("Logging Corrected: " + corrected);
             saveResponse(villagerUUID, playerMessage, corrected);
             return corrected;
         } catch (Exception e) {
