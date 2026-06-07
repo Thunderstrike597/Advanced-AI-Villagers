@@ -8,6 +8,7 @@ import de.maxhenkel.voicechat.api.events.EventRegistration;
 
 import io.github.mightguy.spellcheck.symspell.exception.SpellCheckException;
 import net.kenji.ai_talking_villagers.AiTalkingVillagers;
+import net.kenji.ai_talking_villagers.ConfigClient;
 import net.kenji.ai_talking_villagers.api.manager.SpeechManager;
 import net.kenji.ai_talking_villagers.network.ModPacketHandler;
 import net.kenji.ai_talking_villagers.network.ServerVoiceMessagePacket;
@@ -25,8 +26,6 @@ public class VoiceToChatPlugin implements VoicechatPlugin {
     private final VoiceToTextHandler handler = new VoiceToTextHandler();
     private boolean enabled = true;
 
-    // Silence detection
-    private static final long SILENCE_TIMEOUT_MS = 300;
     private volatile long lastFrameTime = 0;
     private volatile boolean flushScheduled = false;
 
@@ -45,6 +44,8 @@ public class VoiceToChatPlugin implements VoicechatPlugin {
 
     private synchronized void onClientSound(ClientSoundEvent event) {
         if (!enabled) return;
+        if(!ConfigClient.USE_VOICE_RECOGNITON.get())return;
+
         short[] rawAudio = event.getRawAudio();
         if (rawAudio == null || rawAudio.length == 0) return;
 
@@ -65,7 +66,7 @@ public class VoiceToChatPlugin implements VoicechatPlugin {
             while (true) {
                 Thread.sleep(100);
                 long silenceMs = System.currentTimeMillis() - lastFrameTime;
-                if (silenceMs >= SILENCE_TIMEOUT_MS) break;
+                if (silenceMs >= ConfigClient.SILENCE_TIMEOUT_MS.get()) break;
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -91,7 +92,7 @@ public class VoiceToChatPlugin implements VoicechatPlugin {
                     if (Minecraft.getInstance().player != null) {
                         try {
                             String corrected = SpellCorrectionUtils.getCorrectionText(text);
-                            ModPacketHandler.sendToServer(new ServerVoiceMessagePacket(corrected));
+                            ModPacketHandler.sendToServer(new ServerVoiceMessagePacket(corrected, ConfigClient.LOOK_AT_VILLAGER_TO_SPEAK.get()));
                             Minecraft.getInstance().player.getPersistentData().putString(SpeechManager.PLAYER_SPEECH_TAG, corrected);
                         } catch (SpellCheckException e) {
                             throw new RuntimeException(e);

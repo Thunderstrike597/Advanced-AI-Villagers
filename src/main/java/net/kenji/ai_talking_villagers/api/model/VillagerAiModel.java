@@ -22,11 +22,9 @@ public class VillagerAiModel extends io.github.mightguy.spellcheck.symspell.impl
     private static final Logger LOGGER = LogManager.getLogger("VillagerAI");
     private static OrtSessionEnvironment ortSessionEnvironment;
 
-    public static final float TEMPERATURE_PRESET = 0.42F;
-    public static final float TEMPERATURE_CHAT = 0.575F;
-    public static final float REPETITION_PENALTY = 1.12F;
-    public static final int PHRASE_REPEAT_LIMIT = 3;
 
+
+    public static final int PHRASE_REPEAT_LIMIT = 3;
     private static final Map<UUID, List<String>> recentResponses = new HashMap<>();
     private static final int RECENT_RESPONSE_LIMIT = 5;
 
@@ -76,7 +74,7 @@ public class VillagerAiModel extends io.github.mightguy.spellcheck.symspell.impl
         aiThread.start();
     }
 
-    public static String generateResponse(String playerMessage, String context, float temperature, int maxTokens, UUID villagerUUID) {
+    public static String generateResponse(String playerMessage, String context, double temperature, int maxTokens, UUID villagerUUID) {
         if (!isLoaded()) {
             Log.error("RESPONSE FAILED! MODEL NOT LOADED!!");
             return "";
@@ -120,7 +118,7 @@ public class VillagerAiModel extends io.github.mightguy.spellcheck.symspell.impl
                 float[] lastLogits = logits[0][tokenIds.length - 1];
                 applyNoRepeatNgram(lastLogits, tokenIds, PHRASE_REPEAT_LIMIT);
 
-                int nextToken = sampleWithTemperature(lastLogits, temperature, REPETITION_PENALTY, tokenIds);
+                int nextToken = sampleWithTemperature(lastLogits, temperature, ConfigCommon.MODEL_REPETITION_PENALTY.get(), tokenIds);
 
                 // Stop at EOS or endoftext token
                 if (nextToken == 50256) break; // EOS endoftext
@@ -183,7 +181,7 @@ public class VillagerAiModel extends io.github.mightguy.spellcheck.symspell.impl
         }
     }
 
-    public static String generateVillagerGreeting(String context, float temperature, int maxTokens, UUID villagerUUID) {
+    public static String generateVillagerGreeting(String context, double temperature, int maxTokens, UUID villagerUUID) {
         if (!isLoaded()) {
             Log.error("GREETING FAILED! MODEL NOT LOADED!!");
             return "";
@@ -211,7 +209,7 @@ public class VillagerAiModel extends io.github.mightguy.spellcheck.symspell.impl
                 float[] lastLogits = logits[0][tokenIds.length - 1];
                 applyNoRepeatNgram(lastLogits, tokenIds, PHRASE_REPEAT_LIMIT);
 
-                int nextToken = sampleWithTemperature(lastLogits, temperature, REPETITION_PENALTY, tokenIds);
+                int nextToken = sampleWithTemperature(lastLogits, temperature, ConfigCommon.MODEL_REPETITION_PENALTY.get(), tokenIds);
 
                 if (nextToken == 50256) break;
                 if (nextToken == 50260) break;
@@ -241,7 +239,7 @@ public class VillagerAiModel extends io.github.mightguy.spellcheck.symspell.impl
     public static String generateVillagerReply(
             String otherVillagerMessage,
             String context,
-            float temperature,
+            double temperature,
             int maxTokens,
             UUID speakingVillagerUUID,
             UUID listeningVillagerUUID) {
@@ -288,7 +286,7 @@ public class VillagerAiModel extends io.github.mightguy.spellcheck.symspell.impl
                 float[] lastLogits = logits[0][tokenIds.length - 1];
                 applyNoRepeatNgram(lastLogits, tokenIds, PHRASE_REPEAT_LIMIT);
 
-                int nextToken = sampleWithTemperature(lastLogits, temperature, REPETITION_PENALTY, tokenIds);
+                int nextToken = sampleWithTemperature(lastLogits, temperature, ConfigCommon.MODEL_REPETITION_PENALTY.get(), tokenIds);
 
                 if (nextToken == 50256) break;
                 if (nextToken == 50260) break;
@@ -457,16 +455,16 @@ public class VillagerAiModel extends io.github.mightguy.spellcheck.symspell.impl
         return ortSessionEnvironment != null && ortSessionEnvironment.isEnvironmentWithTokenizerLoaded();
     }
 
-    private static int sampleWithTemperature(float[] logits, float temperature, float repetitionPenalty, long[] generatedTokens) {
+    private static int sampleWithTemperature(float[] logits, double temperature, double repetitionPenalty, long[] generatedTokens) {
         // Apply repetition penalty
         float[] penalizedLogits = logits.clone();
         for (long token : generatedTokens) {
             int idx = (int) token;
             if (idx >= 0 && idx < penalizedLogits.length) {
                 if (penalizedLogits[idx] > 0) {
-                    penalizedLogits[idx] /= repetitionPenalty;
+                    penalizedLogits[idx] /= (float) repetitionPenalty;
                 } else {
-                    penalizedLogits[idx] *= repetitionPenalty;
+                    penalizedLogits[idx] *= (float) repetitionPenalty;
                 }
             }
         }

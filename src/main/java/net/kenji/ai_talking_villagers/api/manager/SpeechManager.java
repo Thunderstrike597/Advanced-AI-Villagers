@@ -1,6 +1,7 @@
 package net.kenji.ai_talking_villagers.api.manager;
 
 import com.mojang.datafixers.util.Pair;
+import net.kenji.ai_talking_villagers.ConfigCommon;
 import net.kenji.ai_talking_villagers.api.context.ContextManager;
 import net.kenji.ai_talking_villagers.api.model.VillagerAiModel;
 import net.kenji.ai_talking_villagers.network.ClientTagSyncPacket;
@@ -83,7 +84,7 @@ public class SpeechManager {
             villagerGroup.forEach((villager) -> {
                 String context = ContextManager.getPlayerChatContext(villager, player);
 
-                String response = VillagerAiModel.generateResponse(message, context, VillagerAiModel.TEMPERATURE_CHAT, 25, villager.getUUID());
+                String response = VillagerAiModel.generateResponse(message, context, ConfigCommon.MODEL_TEMPERATURE_CHAT.get(), 25, villager.getUUID());
                 Log.info("Response: " + response);
                 // Replace name placeholder
                 response = response.replace("VILLAGER_NAME", villager.getName().getString());

@@ -1,6 +1,7 @@
 package net.kenji.ai_talking_villagers.client.screen;
 
 import net.kenji.ai_talking_villagers.AiTalkingVillagers;
+import net.kenji.ai_talking_villagers.ConfigClient;
 import net.kenji.ai_talking_villagers.api.manager.SpeechManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -17,13 +18,12 @@ public class AudioCaptionsManager {
 
 
 
-    @SubscribeEvent
     public static void renderCaptions(RenderGuiOverlayEvent event) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
 
         if (player == null) return;
-
+        if(!ConfigClient.SHOW_SPOKEN_CAPTIONS.get())return;
         String captionText = player.getPersistentData().getString(SpeechManager.PLAYER_SPEECH_TAG);
         if (captionText.isEmpty()) return;
 
@@ -52,11 +52,7 @@ public class AudioCaptionsManager {
     }
 
 
-    @SubscribeEvent
-    public static void onClientTick(TickEvent.PlayerTickEvent event){
-        if(event.phase != TickEvent.Phase.END) return;
-        Player player = event.player;
-        if(!player.level().isClientSide()) return;
+    public static void managerCaptionCounter(Player player){
         String captionText = player.getPersistentData().getString(SpeechManager.PLAYER_SPEECH_TAG);
         if (captionText.isEmpty()) return;
 

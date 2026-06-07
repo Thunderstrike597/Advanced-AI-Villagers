@@ -1,6 +1,7 @@
 package net.kenji.ai_talking_villagers.api.handler;
 
 import com.mojang.datafixers.util.Pair;
+import net.kenji.ai_talking_villagers.ConfigCommon;
 import net.kenji.ai_talking_villagers.api.manager.SpeechManager;
 import net.kenji.ai_talking_villagers.api.context.ContextManager;
 import net.kenji.ai_talking_villagers.api.model.VillagerAiModel;
@@ -27,7 +28,7 @@ public class VillagerConversationHandler {
             try {
                 String context = ContextManager.getVillagerChatContext(v1);
                 String opening = VillagerAiModel.generateVillagerGreeting(
-                        context, VillagerAiModel.TEMPERATURE_CHAT, 25, v1.getUUID()
+                        context, ConfigCommon.MODEL_TEMPERATURE_CHAT.get(), 25, v1.getUUID()
                 );
 
                 if (opening.isEmpty() || Thread.currentThread().isInterrupted()) return;
@@ -52,7 +53,7 @@ public class VillagerConversationHandler {
                     String reply = VillagerAiModel.generateVillagerReply(
                             conv.lastMessage,
                             context2,
-                            VillagerAiModel.TEMPERATURE_CHAT,
+                            ConfigCommon.MODEL_TEMPERATURE_CHAT.get(),
                             25,
                             responder.getUUID(),
                             other.getUUID()

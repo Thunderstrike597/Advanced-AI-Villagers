@@ -6,8 +6,10 @@ import net.kenji.ai_talking_villagers.api.manager.RecentEventHandler;
 import net.kenji.ai_talking_villagers.api.manager.SpeechManager;
 import net.kenji.ai_talking_villagers.api.handler.VillagerHurtHandler;
 import net.kenji.ai_talking_villagers.api.handler.VillagerSpeechHandler;
+import net.kenji.ai_talking_villagers.client.screen.AudioCaptionsManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -27,10 +29,16 @@ public class CommonEventManager {
 
     @SubscribeEvent
     public static void onVillagerTick(LivingEvent.LivingTickEvent event) {
-        if (!(event.getEntity() instanceof Villager villager)) return;
+        if (event.getEntity() instanceof Player player) {
+            if(player.level().isClientSide()){
+                AudioCaptionsManager.managerCaptionCounter(player);
+            }
+        }
+        if (event.getEntity() instanceof Villager villager) {
 
-        VillagerSpeechHandler.tick(villager);
-        RecentEventHandler.tick(villager);
+            VillagerSpeechHandler.tick(villager);
+            RecentEventHandler.tick(villager);
+        }
     }
 
     @SubscribeEvent
@@ -53,4 +61,5 @@ public class CommonEventManager {
             RecentEventHandler.assignVillagerDeathRecentEvent(villager);
         }
     }
+
 }

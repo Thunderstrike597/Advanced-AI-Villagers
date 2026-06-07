@@ -10,18 +10,22 @@ import java.util.function.Supplier;
 public class ServerVoiceMessagePacket {
 
     final String message;
+    final boolean lookAtVillagerToSpeak;
     // Constructor only needs UUID and boolean - playerPatch is looked up on server
-    public ServerVoiceMessagePacket(String message) {
+    public ServerVoiceMessagePacket(String message, boolean lookAtVillagerToSpeak) {
         this.message = message;
+        this.lookAtVillagerToSpeak = lookAtVillagerToSpeak;
     }
 
     public static void encode(ServerVoiceMessagePacket packet, FriendlyByteBuf buf) {
         buf.writeUtf(packet.message);
+        buf.writeBoolean(packet.lookAtVillagerToSpeak);
     }
 
     public static ServerVoiceMessagePacket decode(FriendlyByteBuf buf) {
         String text = buf.readUtf();
-        return new ServerVoiceMessagePacket(text); // Fixed - matches constructor
+        boolean lookAtVillagerToSpeak = buf.readBoolean();
+        return new ServerVoiceMessagePacket(text, lookAtVillagerToSpeak); // Fixed - matches constructor
     }
 
     public static void handle(ServerVoiceMessagePacket packet, Supplier<NetworkEvent.Context> ctx) {
@@ -29,7 +33,7 @@ public class ServerVoiceMessagePacket {
             ServerPlayer player = ctx.get().getSender();
 
             if(player == null)return;
-            SpeechManager.sendSpeechMessage(player, packet.message, true);
+            SpeechManager.sendSpeechMessage(player, packet.message, packet.lookAtVillagerToSpeak);
 
         });
         ctx.get().setPacketHandled(true);

@@ -34,7 +34,9 @@ public class AiTalkingVillagers {
         
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, ConfigCommon.SPEC, "AI-Talking-Villagers.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, ConfigCommon.SPEC, "AI-Talking-Villagers-Common.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ConfigClient.SPEC, "AI-Talking-Villagers-Client.toml");
+
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

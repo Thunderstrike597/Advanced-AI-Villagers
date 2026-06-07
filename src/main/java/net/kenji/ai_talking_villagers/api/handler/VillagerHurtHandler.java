@@ -1,5 +1,6 @@
 package net.kenji.ai_talking_villagers.api.handler;
 
+import net.kenji.ai_talking_villagers.ConfigCommon;
 import net.kenji.ai_talking_villagers.api.manager.SpeechManager;
 import net.kenji.ai_talking_villagers.api.context.ContextManager;
 import net.kenji.ai_talking_villagers.api.model.VillagerAiModel;
@@ -40,7 +41,7 @@ public class VillagerHurtHandler {
         SpeechManager.aiThreadPool.execute(() -> {
             Log.info("Model loaded state: " + VillagerAiModel.isLoaded());
             String context = ContextManager.getVillagerCombatContext(villager);
-            String response = VillagerAiModel.generateResponse(buildSituation(villager), context, VillagerAiModel.TEMPERATURE_PRESET, 15, villagerID);
+            String response = VillagerAiModel.generateResponse(buildSituation(villager), context, ConfigCommon.MODEL_TEMPERATURE_OTHER.get(), 15, villagerID);
             Log.info("Logging Villager Hurt Response: " + response);
 
             if (!response.isEmpty()) {
